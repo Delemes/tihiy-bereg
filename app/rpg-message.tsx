@@ -3,6 +3,13 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import type { Scene } from './rpg-story';
+
+/**
+ * Окно разговора не вешает свой обработчик клавиатуры: весь ввод идёт
+ * через единый слой ввода страницы, а она управляет окном через эту ручку.
+ */
+export type DialogueHandle = { skip: () => void; done: boolean };
+
 export function AnimeFace({
   person = 0,
   emotion = 0,
@@ -44,9 +51,11 @@ export function AnimeFace({
 export default function MessageWindow({
   data,
   choose,
+  handle,
 }: {
   data: Scene;
   choose: (id: string) => void;
+  handle?: { current: DialogueHandle | null };
 }) {
   const [letters, setLetters] = useState(0);
   const done = letters >= data.text.length;
@@ -66,23 +75,12 @@ export default function MessageWindow({
     return () => clearInterval(t);
   }, [data.text]);
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.repeat) return;
-      if ((e.code === 'Space' || e.code === 'Enter') && !done) {
-        e.preventDefault();
-        setLetters(data.text.length);
-      }
-      if (done && /^Digit[1-9]$/.test(e.code)) {
-        const ch = data.choices[Number(e.code.slice(-1)) - 1];
-        if (ch && !ch.disabled) {
-          e.preventDefault();
-          choose(ch.id);
-        }
-      }
+    if (!handle) return;
+    handle.current = { skip: () => setLetters(data.text.length), done };
+    return () => {
+      handle.current = null;
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [data, done, choose]);
+  }, [handle, data.text.length, done]);
   return (
     <>
       <div className="portrait-wing">
