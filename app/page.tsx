@@ -2,7 +2,15 @@
 import { trackedObjective } from './rpg-quest-guide';
 import { chamberName } from './rpg-wing-view';
 import { learn } from './rpg-combat';
-import { combatBindings as binds, menuShortcuts } from './rpg-controls';
+import {
+  defaultBindings,
+  keyLabel,
+  loadBindings,
+  menuAction,
+  type Bindings,
+  type GameAction,
+} from './rpg-input';
+import { createInput } from './rpg-input-runtime';
 import { equipWeapon } from './rpg-equipment';
 import { stockInfo } from './rpg-equipment';
 import { useEffect, useRef, useState } from 'react';
@@ -34,7 +42,7 @@ import {
   threatened,
   type State,
 } from './rpg-model';
-import { createWorld, canWalk, type WorldAPI } from './rpg-world';
+import { createWorld, canWalk } from './rpg-world';
 import {
   advance,
   applyConsumable,
@@ -46,7 +54,7 @@ import {
   weapons,
 } from './rpg-systems';
 import { scene, choose, finalScene, type Scene } from './rpg-story';
-import MessageWindow from './rpg-message';
+import MessageWindow, { type DialogueHandle } from './rpg-message';
 import Panels from './rpg-panels';
 import ActivityWindow from './rpg-activity';
 export default function Page() {
@@ -59,14 +67,19 @@ export default function Page() {
       'Вера хранит ключи. Зайдите в магазин у площади.',
     ),
     [muted, setMuted] = useState(true);
+  // Ввод живёт в одном рантайме: клавиатура, мышь и экранные кнопки
+  // дают один кадр действий, который читает игровой цикл.
+  const [input] = useState(() => createInput());
+  const [bindings, setBindings] = useState<Bindings>(defaultBindings);
   const current = useRef(s),
     hydrated = useRef(false),
     panelRef = useRef(''),
     canvas = useRef<HTMLCanvasElement | null>(null),
-    world = useRef<WorldAPI | null>(null),
+    dialogue = useRef<DialogueHandle | null>(null),
     lastUI = useRef(0),
     pulling = useRef(false),
-    actions = useRef({ interact: () => {} });
+    actions = useRef({ interact: () => {}, answer: (_index: number) => {} });
+  const keyOf = (action: GameAction) => keyLabel(bindings[action][0] || '');
   const commit = (n: State, force = true) => {
     current.current = n;
     if (force || performance.now() - lastUI.current > 80) {
@@ -95,6 +108,9 @@ export default function Page() {
   };
   useEffect(() => {
     const f = requestAnimationFrame(() => {
+      const stored = loadBindings();
+      input.setBindings(stored);
+      setBindings(stored);
       try {
         const raw =
           localStorage.getItem('tihiy-bereg-save-v4') ||
@@ -120,7 +136,7 @@ export default function Page() {
       }
     });
     return () => cancelAnimationFrame(f);
-  }, []);
+  }, [input]);
   useEffect(() => {
     actions.current.interact = () => {
       const st = current.current;
@@ -164,8 +180,10 @@ export default function Page() {
         document.hidden,
       (n) => commit(n, false),
       () => actions.current.interact(),
+      input,
     );
-    world.current = api;
+    // Единственный слушатель клавиатуры в игре: меню, разговор и мир
+    // разбираются по схеме действий, а не по разбросанным кодам клавиш.
     const down = (e: KeyboardEvent) => {
       if (
         e.target instanceof HTMLElement &&
@@ -187,27 +205,40 @@ export default function Page() {
       )
         e.preventDefault();
       if (e.repeat) return;
-      if (e.code === 'Escape') {
+      const binds = input.bindings();
+      const menu = menuAction(e.code, binds);
+      if (menu === 'pause') {
         e.preventDefault();
         if (current.current.activity) return;
-        if (panelRef.current) open('');
-        else open('menu');
+        open(panelRef.current ? '' : 'menu');
+        return;
+      }
+      if (panelRef.current === 'talk') {
+        const line = dialogue.current;
+        if ((e.code === 'Space' || e.code === 'Enter') && line && !line.done) {
+          e.preventDefault();
+          line.skip();
+          return;
+        }
+        if (line?.done && /^Digit[1-9]$/.test(e.code)) {
+          e.preventDefault();
+          actions.current.answer(Number(e.code.slice(-1)) - 1);
+        }
         return;
       }
       if (panelRef.current || current.current.activity) return;
-      const shortcut = menuShortcuts[e.code];
-      if (shortcut) {
-        open(shortcut);
+      if (menu) {
+        open(menu);
         return;
       }
-      if (e.code === 'KeyE' || e.code === 'Enter') {
+      if (binds.interact.includes(e.code)) {
         e.preventDefault();
         actions.current.interact();
         return;
       }
-      api.key(e.code, true);
+      input.key(e.code, true);
     };
-    const up = (e: KeyboardEvent) => api.key(e.code, false);
+    const up = (e: KeyboardEvent) => input.key(e.code, false);
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
     return () => {
@@ -215,7 +246,7 @@ export default function Page() {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
     };
-  }, []);
+  }, [input]);
   useEffect(() => {
     let count = 0;
     const timer = setInterval(() => {
@@ -231,6 +262,7 @@ export default function Page() {
     }, 50);
     const hide = () => {
       pulling.current = false;
+      input.clear();
       save();
     };
     window.addEventListener('pagehide', hide);
@@ -241,7 +273,7 @@ export default function Page() {
       window.removeEventListener('blur', hide);
       save();
     };
-  }, []);
+  }, [input]);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(''), 5500);
@@ -312,16 +344,20 @@ export default function Page() {
     time = `${String(Math.floor(s.minutes / 60)).padStart(2, '0')}:${String(Math.floor(s.minutes % 60)).padStart(2, '0')}`;
   const talk =
     reply || (node === 'final' ? finalScene(s) : scene(s, speaker, node));
+  useEffect(() => {
+    actions.current.answer = (index: number) => {
+      const ch = talk.choices[index];
+      if (ch && !ch.disabled) handleChoice(ch.id);
+    };
+  });
   const log = s.log.at(-1) || '',
     notice = toast || log;
-  const touchKey = (key: string, down: boolean) =>
-    world.current?.key(key, down);
   return (
     <main className="game-screen">
       <canvas
         ref={canvas}
         className="world-canvas"
-        aria-label="Мир Тихого берега. WASD — ходить, E — взаимодействовать, ЛКМ и ПКМ — атаки, пробел — уклонение."
+        aria-label={`Мир Тихого берега. WASD — идти, ${keyOf('run')} — бег, ${keyOf('interact')} — взаимодействовать, ЛКМ и ПКМ — атаки, ${keyOf('dodge')} — уклонение.`}
       />
       <div className="hud-top">
         <section className="hero-hud">
@@ -390,7 +426,7 @@ export default function Page() {
             </button>
             <button aria-label="Открыть меню" onClick={() => open('menu')}>
               <Menu size={21} />
-              <kbd>Esc</kbd>
+              <kbd>{keyOf('pause')}</kbd>
             </button>
           </div>
         </div>
@@ -411,7 +447,7 @@ export default function Page() {
               aria-label="Открыть дневник"
               onClick={() => open('journal')}
             >
-              L
+              {keyOf('journal')}
             </button>
           </div>
           {danger && (
@@ -426,7 +462,7 @@ export default function Page() {
                 className="interact-prompt"
                 onClick={() => actions.current.interact()}
               >
-                <kbd>E</kbd>
+                <kbd>{keyOf('interact')}</kbd>
                 <span>
                   {nearby.kind === 'npc'
                     ? 'Поговорить · '
@@ -443,111 +479,112 @@ export default function Page() {
               {weapons[s.weapon].ammo ? ' · ' + s[weapons[s.weapon].ammo!] : ''}
             </span>
             <span>
-              {stockInfo[s.throwItem].name}: {s[s.throwItem]} · T сменить
+              {stockInfo[s.throwItem].name}: {s[s.throwItem]} ·{' '}
+              {keyOf('cycle')} сменить
             </span>
             {s.wanted > 0 && (
               <strong>
                 Розыск {s.wanted} · патруль{' '}
-                {s.wanted >= 3 ? 'в пути' : 'предупреждён'}
+                {s.wanted >= 3 ? 'в пути' : 'предупреждᄅн'}
               </strong>
             )}
           </div>
           <div className="action-dock">
-            {[
-              [Backpack, 'Tab', 'Рюкзак', 'bag'],
-              [Map, 'M', 'Карта', 'map'],
-              [Heart, 'R', 'Знакомые', 'people'],
-            ].map(([Icon, key, label, p]) => {
-              const I = Icon as typeof Backpack;
-              return (
-                <button
-                  key={String(key)}
-                  onClick={() => open(String(p))}
-                  title={String(label)}
-                  aria-label={String(label)}
-                >
-                  <I size={21} />
-                  <kbd>{String(key)}</kbd>
-                </button>
-              );
-            })}
+            {(
+              [
+                [Backpack, 'bag', 'Рюкзак'],
+                [Map, 'map', 'Карта'],
+                [Heart, 'people', 'Знакомые'],
+              ] as const
+            ).map(([Icon, id, label]) => (
+              <button
+                key={id}
+                onClick={() => open(id)}
+                title={label}
+                aria-label={label}
+              >
+                <Icon size={21} />
+                <kbd>{keyOf(id)}</kbd>
+              </button>
+            ))}
             <span className="dock-divider" />
             <button
-              title="F — метнуть предмет, T — сменить"
-              onClick={() => {
-                touchKey(binds.throw.key, true);
-                setTimeout(() => touchKey(binds.throw.key, false), 90);
-              }}
+              title={`${keyOf('throw')} — метнуть предмет`}
+              onClick={() => input.tap('throw')}
             >
               <span className="throw-glyph">↗</span>
               <kbd>
-                {binds.throw.label} · {s[s.throwItem]}
+                {keyOf('throw')} · {s[s.throwItem]}
               </kbd>
             </button>
             <button
-              title="Q — особый приём оружия"
-              onClick={() => {
-                touchKey(binds.special.key, true);
-                setTimeout(() => touchKey(binds.special.key, false), 90);
-              }}
+              title={`${keyOf('special')} — особый приём оружия`}
+              onClick={() => input.tap('special')}
             >
               <span className="throw-glyph">✧</span>
-              <kbd>{binds.special.label}</kbd>
+              <kbd>{keyOf('special')}</kbd>
             </button>
             <button
-              title="ЛКМ / J — удар или выстрел (удерживать для серии)"
+              title="ЛКМ — удар или выстрел, удерживайте для серии"
               onPointerDown={(e) => {
                 e.currentTarget.setPointerCapture(e.pointerId);
-                touchKey(binds.attack.key, true);
+                input.hold('attack', true);
               }}
-              onPointerUp={() => touchKey(binds.attack.key, false)}
-              onPointerCancel={() => touchKey(binds.attack.key, false)}
-              onLostPointerCapture={() => touchKey(binds.attack.key, false)}
+              onPointerUp={() => input.hold('attack', false)}
+              onPointerCancel={() => input.hold('attack', false)}
+              onLostPointerCapture={() => input.hold('attack', false)}
             >
               <Swords size={22} />
-              <kbd>{binds.attack.label}</kbd>
+              <kbd>{keyOf('attack')}</kbd>
             </button>
             <button
-              title="ПКМ / K — сильная атака"
+              title="ПКМ — сильная атака"
               onPointerDown={(e) => {
                 e.currentTarget.setPointerCapture(e.pointerId);
-                touchKey(binds.heavy.key, true);
+                input.hold('heavy', true);
               }}
-              onPointerUp={() => touchKey(binds.heavy.key, false)}
-              onPointerCancel={() => touchKey(binds.heavy.key, false)}
-              onLostPointerCapture={() => touchKey(binds.heavy.key, false)}
+              onPointerUp={() => input.hold('heavy', false)}
+              onPointerCancel={() => input.hold('heavy', false)}
+              onLostPointerCapture={() => input.hold('heavy', false)}
             >
               <ChevronsUp size={22} />
-              <kbd>{binds.heavy.label}</kbd>
+              <kbd>{keyOf('heavy')}</kbd>
             </button>
             <button
-              title="Shift — держать блок"
+              title={`${keyOf('guard')} — держать блок; ${keyOf('run')} на месте тоже блокирует`}
               onPointerDown={(e) => {
                 e.currentTarget.setPointerCapture(e.pointerId);
-                touchKey(binds.guard.key, true);
+                input.hold('guard', true);
               }}
-              onPointerUp={() => touchKey(binds.guard.key, false)}
-              onPointerCancel={() => touchKey(binds.guard.key, false)}
-              onLostPointerCapture={() => touchKey(binds.guard.key, false)}
+              onPointerUp={() => input.hold('guard', false)}
+              onPointerCancel={() => input.hold('guard', false)}
+              onLostPointerCapture={() => input.hold('guard', false)}
             >
               <Shield size={21} />
-              <kbd>{binds.guard.label}</kbd>
+              <kbd>{keyOf('guard')}</kbd>
             </button>
             <button
-              title="Пробел — уклониться в сторону движения"
+              title={`${keyOf('run')} — бег в сторону движения`}
               onPointerDown={(e) => {
                 e.currentTarget.setPointerCapture(e.pointerId);
-                touchKey(binds.dodge.key, true);
+                input.hold('run', true);
               }}
-              onPointerUp={() => touchKey(binds.dodge.key, false)}
-              onPointerCancel={() => touchKey(binds.dodge.key, false)}
-              onLostPointerCapture={() => touchKey(binds.dodge.key, false)}
+              onPointerUp={() => input.hold('run', false)}
+              onPointerCancel={() => input.hold('run', false)}
+              onLostPointerCapture={() => input.hold('run', false)}
             >
               <Footprints size={21} />
-              <kbd>{binds.dodge.label}</kbd>
+              <kbd>{keyOf('run')}</kbd>
             </button>
             <button
-              title={'1 — бинт · ' + s.bandages}
+              title={`${keyOf('dodge')} — уклониться в сторону движения`}
+              onPointerDown={() => input.tap('dodge')}
+            >
+              <span className="throw-glyph">↷</span>
+              <kbd>{keyOf('dodge')}</kbd>
+            </button>
+            <button
+              title={`${keyOf('heal')} — бинт · ${s.bandages}`}
               disabled={s.bandages === 0 || s.healCooldown > 0}
               onClick={() =>
                 commit(applyConsumable(current.current, 'bandages'))
@@ -555,25 +592,28 @@ export default function Page() {
             >
               <Plus size={21} />
               <kbd>
-                {binds.heal.label} · {s.bandages}
+                {keyOf('heal')} · {s.bandages}
               </kbd>
             </button>
           </div>
           <div className="touch-move" aria-label="Направление движения">
-            {[
-              ['↑', 'KeyW'],
-              ['←', 'KeyA'],
-              ['↓', 'KeyS'],
-              ['→', 'KeyD'],
-            ].map(([label, key]) => (
+            {(
+              [
+                ['↑', 'moveUp'],
+                ['←', 'moveLeft'],
+                ['↓', 'moveDown'],
+                ['→', 'moveRight'],
+              ] as const
+            ).map(([label, action]) => (
               <button
-                key={key}
+                key={action}
                 onPointerDown={(e) => {
                   e.currentTarget.setPointerCapture(e.pointerId);
-                  touchKey(key, true);
+                  input.hold(action, true);
                 }}
-                onPointerUp={() => touchKey(key, false)}
-                onPointerCancel={() => touchKey(key, false)}
+                onPointerUp={() => input.hold(action, false)}
+                onPointerCancel={() => input.hold(action, false)}
+                onLostPointerCapture={() => input.hold(action, false)}
               >
                 {label}
               </button>
@@ -622,6 +662,7 @@ export default function Page() {
               key={speaker + node + talk.text}
               data={talk}
               choose={handleChoice}
+              handle={dialogue}
             />
           ) : (
             <Panels
