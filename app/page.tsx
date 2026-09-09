@@ -485,7 +485,7 @@ export default function Page() {
             {s.wanted > 0 && (
               <strong>
                 Розыск {s.wanted} · патруль{' '}
-                {s.wanted >= 3 ? 'в пути' : 'предупреждᄅн'}
+                {s.wanted >= 3 ? 'в пути' : 'предупреждён'}
               </strong>
             )}
           </div>
