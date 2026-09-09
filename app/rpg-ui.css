@@ -1,0 +1,452 @@
+/*
+ * UI Design System — Тихий берег (§6).
+ *
+ * Один набор токенов для всех игровых поверхностей: HUD, пауза, инвентарь,
+ * диалог, контекстное меню, торговля, уведомления.
+ *
+ * Правила: жёсткие рамки 2px, радиус не больше 3px, никаких градиентов-радуг,
+ * никакого glassmorphism, ни одной синей SaaS-кнопки. Палитра — сырое северное
+ * побережье: торф, жесть, холодная вода, тёплый ламповый акцент.
+ */
+
+:root {
+	/* Поверхности */
+	--ui-bg: #12100d;
+	--ui-panel: #1c1915;
+	--ui-panel-raised: #232019;
+	--ui-panel-sunken: #14120f;
+	--ui-scrim: rgba(8, 7, 6, 0.62);
+
+	/* Рамки */
+	--ui-line: #3b342a;
+	--ui-line-strong: #574c3c;
+	--ui-line-inner: rgba(0, 0, 0, 0.55);
+
+	/* Текст */
+	--ui-text: #e6ddc9;
+	--ui-text-dim: #c3b79f;
+	--ui-text-muted: #9a8f7a;
+	--ui-text-faint: #6f6656;
+
+	/* Акценты: лампа, кровь, вода, трава */
+	--ui-accent: #c8a35a;
+	--ui-accent-dim: #8d7038;
+	--ui-danger: #a8402f;
+	--ui-danger-dim: #6d2a1f;
+	--ui-cold: #5b7d8c;
+	--ui-good: #6f8f4e;
+
+	/* Шкалы */
+	--ui-hp: #a8402f;
+	--ui-stamina: #b08b3f;
+	--ui-hunger: #7a6a45;
+
+	/* Типографика — три роли, без случайных размеров */
+	--ui-font: 'Georgia', 'Times New Roman', serif;
+	--ui-font-ui: 'Georgia', 'Times New Roman', serif;
+	--ui-size-title: 19px;
+	--ui-size-body: 15px;
+	--ui-size-label: 13px;
+	--ui-size-micro: 11px;
+	--ui-leading: 1.45;
+	--ui-tracking-label: 0.06em;
+
+	/* Сетка отступов: шаг 4 */
+	--ui-gap-1: 4px;
+	--ui-gap-2: 8px;
+	--ui-gap-3: 12px;
+	--ui-gap-4: 16px;
+	--ui-gap-5: 24px;
+
+	--ui-radius: 2px;
+	--ui-border: 2px;
+	--ui-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+	--ui-speed: 120ms;
+}
+
+/* Базовая панель: двойная рамка без теней-размытий */
+.ui-panel {
+	background: var(--ui-panel);
+	border: var(--ui-border) solid var(--ui-line-strong);
+	box-shadow:
+		inset 0 0 0 1px var(--ui-line-inner),
+		var(--ui-shadow);
+	border-radius: var(--ui-radius);
+	color: var(--ui-text);
+	font-family: var(--ui-font);
+	font-size: var(--ui-size-body);
+	line-height: var(--ui-leading);
+}
+
+.ui-panel--sunken {
+	background: var(--ui-panel-sunken);
+	box-shadow: inset 0 0 0 1px var(--ui-line-inner);
+}
+
+.ui-panel__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--ui-gap-2);
+	padding: var(--ui-gap-2) var(--ui-gap-3);
+	border-bottom: 1px solid var(--ui-line);
+	background: var(--ui-panel-raised);
+}
+
+.ui-title {
+	font-size: var(--ui-size-title);
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	margin: 0;
+}
+
+.ui-label {
+	font-size: var(--ui-size-label);
+	letter-spacing: var(--ui-tracking-label);
+	text-transform: uppercase;
+	color: var(--ui-text-muted);
+}
+
+.ui-body {
+	padding: var(--ui-gap-3);
+}
+
+/* Кнопка: одна на всю игру, со всеми состояниями */
+.ui-btn {
+	--btn-face: #26221b;
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-gap-2);
+	padding: 6px 12px;
+	min-height: 30px;
+	background: var(--btn-face);
+	color: var(--ui-text);
+	border: 1px solid var(--ui-line-strong);
+	border-radius: var(--ui-radius);
+	font-family: var(--ui-font-ui);
+	font-size: var(--ui-size-label);
+	letter-spacing: 0.02em;
+	cursor: pointer;
+	transition:
+		background var(--ui-speed) linear,
+		border-color var(--ui-speed) linear,
+		transform var(--ui-speed) linear;
+}
+
+.ui-btn:hover:not(:disabled) {
+	--btn-face: #2f2a20;
+	border-color: var(--ui-accent-dim);
+}
+
+.ui-btn:active:not(:disabled) {
+	transform: translateY(1px);
+	--btn-face: #1d1a14;
+}
+
+.ui-btn:focus-visible {
+	outline: none;
+	border-color: var(--ui-accent);
+	box-shadow: 0 0 0 2px rgba(200, 163, 90, 0.28);
+}
+
+.ui-btn[aria-selected='true'],
+.ui-btn.is-selected {
+	--btn-face: #332c1f;
+	border-color: var(--ui-accent);
+	color: #f2e8d0;
+}
+
+.ui-btn:disabled,
+.ui-btn[aria-disabled='true'] {
+	color: var(--ui-text-faint);
+	border-color: var(--ui-line);
+	background: #1a1713;
+	cursor: not-allowed;
+}
+
+.ui-btn--danger:hover:not(:disabled) {
+	border-color: var(--ui-danger);
+}
+
+.ui-btn__key {
+	font-size: var(--ui-size-micro);
+	color: var(--ui-text-faint);
+	border: 1px solid var(--ui-line);
+	padding: 0 4px;
+	border-radius: var(--ui-radius);
+}
+
+/* Подсказка взаимодействия у объекта (§8) */
+.ui-prompt {
+	position: absolute;
+	transform: translate(-50%, -100%);
+	padding: 2px 8px;
+	background: rgba(18, 16, 13, 0.9);
+	border: 1px solid var(--ui-line-strong);
+	border-radius: var(--ui-radius);
+	color: var(--ui-text);
+	font-family: var(--ui-font);
+	font-size: var(--ui-size-label);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+.ui-prompt__key {
+	color: var(--ui-accent);
+	font-weight: 700;
+}
+
+/* Компактное контекстное меню объекта */
+.ui-context {
+	position: absolute;
+	min-width: 168px;
+	max-width: 240px;
+	padding: 0;
+	animation: ui-rise var(--ui-speed) ease-out;
+}
+
+.ui-context__name {
+	padding: var(--ui-gap-2) var(--ui-gap-3) var(--ui-gap-1);
+	font-size: var(--ui-size-body);
+	font-weight: 700;
+}
+
+.ui-context__desc {
+	padding: 0 var(--ui-gap-3) var(--ui-gap-2);
+	font-size: var(--ui-size-label);
+	color: var(--ui-text-muted);
+}
+
+.ui-context__list {
+	list-style: none;
+	margin: 0;
+	padding: var(--ui-gap-1) 0 var(--ui-gap-1);
+	border-top: 1px solid var(--ui-line);
+}
+
+.ui-context__item {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-gap-2);
+	width: 100%;
+	padding: 4px var(--ui-gap-3);
+	background: none;
+	border: none;
+	color: var(--ui-text);
+	font-family: var(--ui-font);
+	font-size: var(--ui-size-body);
+	text-align: left;
+	cursor: pointer;
+}
+
+.ui-context__item::before {
+	content: '\203a';
+	color: transparent;
+}
+
+.ui-context__item:hover,
+.ui-context__item.is-active {
+	background: #2a251c;
+}
+
+.ui-context__item:hover::before,
+.ui-context__item.is-active::before {
+	color: var(--ui-accent);
+}
+
+.ui-context__item[aria-disabled='true'] {
+	color: var(--ui-text-faint);
+	cursor: not-allowed;
+}
+
+.ui-context__reason {
+	margin-left: auto;
+	font-size: var(--ui-size-micro);
+	color: var(--ui-text-faint);
+}
+
+/* Диалог — нижняя полоса, а не полноэкранное окно (§7) */
+.ui-dialogue {
+	position: absolute;
+	left: 50%;
+	bottom: 18px;
+	transform: translateX(-50%);
+	width: min(680px, calc(100% - 32px));
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: var(--ui-gap-3);
+	padding: var(--ui-gap-3);
+	animation: ui-rise 140ms ease-out;
+}
+
+.ui-dialogue__portrait {
+	width: 64px;
+	height: 64px;
+	border: 1px solid var(--ui-line-strong);
+	background: var(--ui-panel-sunken);
+	image-rendering: pixelated;
+	object-fit: cover;
+}
+
+.ui-dialogue__name {
+	font-size: var(--ui-size-label);
+	letter-spacing: var(--ui-tracking-label);
+	text-transform: uppercase;
+	color: var(--ui-accent);
+	margin-bottom: var(--ui-gap-1);
+}
+
+.ui-dialogue__text {
+	font-size: var(--ui-size-body);
+	min-height: 3em;
+}
+
+.ui-dialogue__more {
+	position: absolute;
+	right: var(--ui-gap-3);
+	bottom: var(--ui-gap-2);
+	color: var(--ui-accent);
+	animation: ui-blink 900ms steps(2, end) infinite;
+}
+
+.ui-choices {
+	list-style: none;
+	margin: var(--ui-gap-2) 0 0;
+	padding: 0;
+	display: grid;
+	gap: 2px;
+}
+
+/* Тултип предмета (§11) */
+.ui-tooltip {
+	position: absolute;
+	z-index: 40;
+	max-width: 260px;
+	padding: var(--ui-gap-2) var(--ui-gap-3);
+	font-size: var(--ui-size-label);
+	pointer-events: none;
+}
+
+.ui-tooltip__stats {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 0 var(--ui-gap-2);
+	margin-top: var(--ui-gap-1);
+	color: var(--ui-text-muted);
+}
+
+.ui-tooltip__delta--up {
+	color: var(--ui-good);
+}
+
+.ui-tooltip__delta--down {
+	color: var(--ui-danger);
+}
+
+/* Слоты инвентаря */
+.ui-slots {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+	gap: var(--ui-gap-1);
+}
+
+.ui-slot {
+	position: relative;
+	aspect-ratio: 1;
+	background: var(--ui-panel-sunken);
+	border: 1px solid var(--ui-line);
+	border-radius: var(--ui-radius);
+	display: grid;
+	place-items: center;
+	cursor: pointer;
+}
+
+.ui-slot:hover {
+	border-color: var(--ui-accent-dim);
+}
+
+.ui-slot.is-equipped {
+	border-color: var(--ui-accent);
+}
+
+.ui-slot__count {
+	position: absolute;
+	right: 2px;
+	bottom: 1px;
+	font-size: var(--ui-size-micro);
+	color: var(--ui-text-muted);
+}
+
+/* Полосы HUD */
+.ui-bar {
+	height: 8px;
+	background: #0d0b09;
+	border: 1px solid var(--ui-line);
+	border-radius: 1px;
+	overflow: hidden;
+}
+
+.ui-bar__fill {
+	height: 100%;
+	background: var(--ui-hp);
+	transition: width 90ms linear;
+}
+
+.ui-bar--stamina .ui-bar__fill {
+	background: var(--ui-stamina);
+}
+
+.ui-bar--hunger .ui-bar__fill {
+	background: var(--ui-hunger);
+}
+
+/* Уведомления: одна строка, без карточек и иконок */
+.ui-toast {
+	padding: 4px 10px;
+	background: rgba(18, 16, 13, 0.92);
+	border-left: 2px solid var(--ui-accent-dim);
+	color: var(--ui-text);
+	font-size: var(--ui-size-label);
+	animation: ui-rise 120ms ease-out;
+}
+
+.ui-toast--danger {
+	border-left-color: var(--ui-danger);
+}
+
+/* Затемнение под модальными экранами */
+.ui-scrim {
+	position: absolute;
+	inset: 0;
+	background: var(--ui-scrim);
+}
+
+@keyframes ui-rise {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes ui-blink {
+	50% {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ui-context,
+	.ui-dialogue,
+	.ui-toast {
+		animation: none;
+	}
+
+	.ui-dialogue__more {
+		animation: none;
+	}
+}
