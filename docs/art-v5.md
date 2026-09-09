@@ -1,0 +1,11 @@
+# Графика обновления
+
+Метод: встроенный image_gen, по одному запросу на атлас, без перегенераций. Исходные PNG сохранены без изменения. При отрисовке движок убирает связанный с краями фон, сохраняя закрытые тёмные области проёмов.
+
+## public/passages-v5.png
+
+Create ONE production sprite atlas PNG for a rural Russia 2D JRPG, transparent background. Landscape1536x1024, 3 equal columns by 2 equal rows, no grid, no text. Six isolated sprites each centered with generous padding, no overlap. Row1: open warm timber doorway with black opaque interior; mossy stone arch dark opaque passage; secret doorway framed by shifted wooden bookcase. Row2: wooden stairs ascending north/up with handrail; stone steps descending north into dark cellar doorway; rustic wooden trail sign with blank arrow board beside a stone trail step. Orthographic frontal top-down 3/4 RPG Maker camera, detailed hand-painted pixel art, weathered amber timber, muted warm stone, crisp dark pixel outlines, not isometric, no room background. Doorframes stand upright tall, the black opening remains opaque, everything outside each object genuinely alpha transparent. All sprites face north/front except steps naturally recede up. Entire objects contained in cells. These will render140-190pixels high alongside a140pixel character. No halos, magical circles, people, labels or extra objects.
+
+## public/weapons-v5.png
+
+One sprite atlas for 2D action RPG: 4 equal columns x 2 equal rows, landscape1536x1024. Single weapon sprite centered in each equal cell on perfectly solid flat deep navy #101820 background, NO shadows gradients glow circles labels text borders or characters. Pixel art detailed weathered rural weapons. All weapons are side-view horizontal, handle/grip at LEFT tip at RIGHT, entire weapon fully visible, equal margin. Row1 left-to-right wooden club, hunting knife, woodcutter axe (shaft left head right), long hunting spear. Row2 old saber, wooden bow (grip at left of center, limbs toward right side), wooden crossbow pointing RIGHT, leather slingshot handle LEFT fork RIGHT. These are held weapon sprites rotated in code beside JRPG character hands, must be highly readable at60px. Crisp handpainted pixel contours, silvergray blades, amber timber, matte leather, no sword arcs. Background exactly uniform #101820 so engine can color-key, opaque not transparency.
