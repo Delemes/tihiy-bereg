@@ -1,6 +1,6 @@
 import { drawPassage, passageKind, preparePassageAtlas } from './rpg-passages';
 import { drawArmedHero, combatFeedback } from './rpg-combat-view';
-import { combatInput } from './rpg-controls';
+import { createInput, type InputRuntime } from './rpg-input-runtime';
 import { drawWings } from './rpg-wing-view';
 import { room, indoors, unitScale, finds } from './rpg-regions';
 import {
@@ -56,6 +56,7 @@ export function createWorld(
   isPaused: () => boolean,
   update: (s: State) => void,
   _act?: () => void,
+  shared?: InputRuntime,
 ): WorldAPI {
   const c = canvas.getContext('2d')!;
   let frame = 0,
@@ -71,8 +72,9 @@ export function createWorld(
     hitPause = 0,
     drawDelta = 0;
   const feedback = combatFeedback();
-  const keys = new Set<string>(),
-    pressed = new Set<string>();
+  // Один источник ввода на всю игру: страница передаёт свой рантайм,
+  // а мир только читает готовый кадр и добавляет кнопки мыши.
+  const input = shared ?? createInput();
   let cursor: { x: number; y: number } | null = null;
   let mouseActive = false;
   const images: Record<string, HTMLImageElement> = {};
@@ -541,7 +543,7 @@ export function createWorld(
     if (!isPaused() && transition < 0.2 && hitPause <= 0) {
       simulated = true;
       const s = getState();
-      const input = combatInput(keys, pressed);
+      const frameInput = input.frame();
       if (cursor) {
         const x = cursor.x / zoom + camX,
           y = cursor.y / zoom + camY;
@@ -562,7 +564,7 @@ export function createWorld(
               Math.hypot(x - a.x, y - a.y + 35 * u) -
               Math.hypot(x - b.x, y - b.y + 35 * u),
           )[0];
-        input.aim = Math.atan2(
+        frameInput.aim = Math.atan2(
           (target?.y ?? y + 26 * u) - s.y,
           (target?.x ?? x) - s.x,
         );
@@ -570,7 +572,7 @@ export function createWorld(
       const n = tickWorld(
         s,
         dt,
-        input,
+        frameInput,
         (x, y, r) =>
           canWalk(x, y, r) &&
           !(r === 'mine' && !s.flags.includes('valveOpen') && y < 545),
@@ -583,7 +585,7 @@ export function createWorld(
     } else if (isPaused()) {
       clear();
     }
-    if (simulated || isPaused()) pressed.clear();
+    if (simulated || isPaused()) input.endFrame();
     draw();
     frame = requestAnimationFrame(tick);
   }
@@ -596,13 +598,8 @@ export function createWorld(
     for (const [button, mask] of [
       [0, 1],
       [2, 2],
-    ]) {
-      const key = 'Mouse' + button;
-      if (mouseActive && e.buttons & mask) {
-        if (!keys.has(key)) pressed.add(key);
-        keys.add(key);
-      } else keys.delete(key);
-    }
+    ])
+      input.key('Mouse' + button, mouseActive && !!(e.buttons & mask));
     if (!(e.buttons & 3)) mouseActive = false;
   };
   const pointerMove = (e: PointerEvent) => {
@@ -623,12 +620,11 @@ export function createWorld(
   const leave = () => {
     cursor = null;
     mouseActive = false;
-    keys.delete('Mouse0');
-    keys.delete('Mouse2');
+    input.key('Mouse0', false);
+    input.key('Mouse2', false);
   };
   const clear = () => {
-    keys.clear();
-    pressed.clear();
+    input.clear();
     cursor = null;
     mouseActive = false;
   };
@@ -643,12 +639,7 @@ export function createWorld(
   window.addEventListener('blur', clear);
   frame = requestAnimationFrame(tick);
   return {
-    key: (k, down) => {
-      if (down) {
-        if (!keys.has(k)) pressed.add(k);
-        keys.add(k);
-      } else keys.delete(k);
-    },
+    key: (k, down) => input.key(k, down),
     destroy: () => {
       cancelAnimationFrame(frame);
       obs.disconnect();
