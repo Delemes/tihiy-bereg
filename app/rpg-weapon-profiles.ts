@@ -21,6 +21,7 @@ export type AttackKind = 'light' | 'heavy' | 'special'
 export type WeaponLike = {
 	damage?: number
 	reach?: number
+	/** длительность взмаха в секундах: меньше — быстрее */
 	speed?: number
 	arc?: number
 	mode?: string
@@ -154,6 +155,9 @@ const clamp = (v: number, lo: number, hi: number) =>
 const num = (v: unknown, fallback: number) =>
 	typeof v === 'number' && Number.isFinite(v) ? v : fallback
 
+/** Палка — эталон темпа: её длительность взмаха принята за единицу. */
+export const baseSwingTime = 0.62
+
 export function weaponClassOf(id: string, weapon?: WeaponLike): WeaponClass {
 	const known = weaponClasses[id]
 	if (known) return known
@@ -254,16 +258,13 @@ export function attackFrames(
 ): AttackFrames {
 	const profile = weaponProfile(id, weapon)
 	const scale = kindScale[kind] ?? kindScale.light
-	// speed > 1 — быстрое оружие; ограничиваем, чтобы данные предмета
-	// не ломали читаемость боя.
-	const speed = clamp(num(weapon?.speed, 1), 0.6, 1.6)
-	const startup = clamp((profile.startup * scale.startup) / speed, 0.04, 0.55)
-	const active = clamp((profile.active * scale.active) / speed, 0.04, 0.3)
-	const recovery = clamp(
-		(profile.recovery * scale.recovery) / speed,
-		0.08,
-		0.6,
-	)
+	// speed в данных предмета — это длительность взмаха в секундах
+	// (нож 0.35 быстрый, арбалет 1.55 медленный), а не множитель скорости.
+	// Переводим её в темп относительно палки: 1 — обычный, больше — медленнее.
+	const tempo = clamp(num(weapon?.speed, baseSwingTime) / baseSwingTime, 0.55, 2.2)
+	const startup = clamp(profile.startup * scale.startup * tempo, 0.04, 0.55)
+	const active = clamp(profile.active * scale.active * tempo, 0.04, 0.3)
+	const recovery = clamp(profile.recovery * scale.recovery * tempo, 0.08, 0.6)
 	const reach = clamp(
 		num(weapon?.reach, 34) * profile.reachScale * scale.reach,
 		18,
