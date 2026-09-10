@@ -32,7 +32,6 @@ import {
   Utensils,
   ChevronsUp,
 } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   activePlaces,
   initialState,
@@ -94,6 +93,7 @@ export default function Page() {
     panelRef = useRef(''),
     canvas = useRef<HTMLCanvasElement | null>(null),
     dialogue = useRef<DialogueHandle | null>(null),
+    windowRef = useRef<HTMLDivElement | null>(null),
     lastUI = useRef(0),
     pulling = useRef(false),
     actions = useRef({
@@ -146,6 +146,13 @@ export default function Page() {
     setContextNode('root');
     setCursor(0);
     open('');
+  };
+  // Пауза, снаряжение и занятие закрываются одинаково: клавишей паузы
+  // и щелчком по затемнению. Занятие держит игрока до своего решения.
+  const closeWindow = () => {
+    if (current.current.activity) return;
+    open('');
+    setReply(null);
   };
   // Одно очевидное действие выполняется сразу: сундук открывается, вода
   // набирается. Окно ради одной кнопки не появляется.
@@ -487,6 +494,10 @@ export default function Page() {
   const contextScene = context ? scene(s, context.id, contextNode) : null;
   const contextRows = contextScene ? actionRows(contextScene) : [];
   const contextIndex = Math.min(cursor, Math.max(0, contextRows.length - 1));
+  // Разговор и контекстное меню рисуются прямо в мире; окно нужно только
+  // паузе, разделам меню и занятию.
+  const windowOpen =
+    (!!panel && panel !== 'context' && panel !== 'talk') || !!s.activity;
   useEffect(() => {
     actions.current.answer = (index: number) => {
       const ch = talk.choices[index];
@@ -511,6 +522,10 @@ export default function Page() {
     };
     actions.current.cancel = closeContext;
   });
+  // Открытое окно забирает фокус, иначе клавиатура остаётся на кнопке HUD.
+  useEffect(() => {
+    if (windowOpen) windowRef.current?.focus();
+  }, [windowOpen]);
   const log = s.log.at(-1) || '',
     notice = toast || log;
   return (
@@ -802,65 +817,66 @@ export default function Page() {
           {notice.length > 145 ? notice.slice(0, 142) + '…' : notice}
         </output>
       )}
-      <Dialog
-        open={
-          (!!panel && panel !== 'context' && panel !== 'talk') || !!s.activity
-        }
-        onOpenChange={(value) => {
-          if (!value && !current.current.activity) {
-            open('');
-            setReply(null);
-          }
-        }}
-      >
-        <DialogContent
-          showCloseButton={false}
-          className={s.activity ? 'activity-window' : 'rpg-menu'}
+      {windowOpen && (
+        <div
+          className="ui-layer"
+          onPointerDown={(e) => {
+            if (e.target === e.currentTarget) closeWindow();
+          }}
         >
-          {s.activity ? (
-            <ActivityWindow
-              s={s}
-              action={(id) => {
-                commit(activityInput(current.current, id));
-                pulling.current = false;
-                save();
-              }}
-              pull={(v) => {
-                pulling.current = v;
-              }}
-            />
-          ) : (
-            <Panels
-              s={s}
-              panel={panel}
-              setPanel={open}
-              track={(id) => commit({ ...current.current, trackedQuest: id })}
-              close={() => open('')}
-              save={() => save(true)}
-              item={(id) =>
-                commit(
-                  id.startsWith('learn:')
-                    ? learn(current.current, id.slice(6))
-                    : id.startsWith('throw:')
-                      ? {
-                          ...current.current,
-                          throwItem: id.slice(6) as State['throwItem'],
-                        }
-                      : applyConsumable(current.current, id),
-                )
-              }
-              equip={(w) => commit(equipWeapon(current.current, w))}
-              reset={() => {
-                commit(structuredClone(initialState));
-                save();
-                setReply(null);
-                open('');
-                setToast('Новое путешествие. За ключами — к Вере.');
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+          <div
+            ref={windowRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={s.activity ? 'Занятие' : 'Меню путешествия'}
+            className={s.activity ? 'activity-window' : 'rpg-menu'}
+          >
+            {s.activity ? (
+              <ActivityWindow
+                s={s}
+                action={(id) => {
+                  commit(activityInput(current.current, id));
+                  pulling.current = false;
+                  save();
+                }}
+                pull={(v) => {
+                  pulling.current = v;
+                }}
+              />
+            ) : (
+              <Panels
+                s={s}
+                panel={panel}
+                setPanel={open}
+                track={(id) => commit({ ...current.current, trackedQuest: id })}
+                close={() => open('')}
+                save={() => save(true)}
+                item={(id) =>
+                  commit(
+                    id.startsWith('learn:')
+                      ? learn(current.current, id.slice(6))
+                      : id.startsWith('throw:')
+                        ? {
+                            ...current.current,
+                            throwItem: id.slice(6) as State['throwItem'],
+                          }
+                        : applyConsumable(current.current, id),
+                  )
+                }
+                equip={(w) => commit(equipWeapon(current.current, w))}
+                reset={() => {
+                  commit(structuredClone(initialState));
+                  save();
+                  setReply(null);
+                  open('');
+                  setToast('Новое путешествие. За ключами — к Вере.');
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
