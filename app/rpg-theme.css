@@ -483,40 +483,13 @@
 .item-sell-value b {
   color: #d2c49d;
 }
-.weapon-stats {
+/*
+ * Сравнение оружия рисует дизайн-система (.ui-tooltip в rpg-ui.css).
+ * Раньше здесь жила собственная таблица со своими цветами дельт;
+ * теперь тема задаёт только место блока в колонке инспектора.
+ */
+.weapon-compare {
   margin: 0 0 15px;
-}
-.weapon-stats span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #9bacb8;
-  border-bottom: 1px solid #334655;
-  padding: 7px 0;
-}
-.weapon-stats b {
-  margin-left: auto;
-  color: #e2d8bd;
-}
-/* Сравнение с оружием в руках (§11): знак и цвет вместо второй таблицы. */
-.weapon-stats em {
-  font-style: normal;
-  font-size: 10px;
-  min-width: 46px;
-  text-align: right;
-  color: #8b9ca7;
-}
-.weapon-stats em.better {
-  color: #a9c08a;
-}
-.weapon-stats em.worse {
-  color: #c9927e;
-}
-.compare-note {
-  margin: 0 0 8px;
-  font-size: 10px;
-  color: #8b9ca7;
 }
 .item-purpose {
   padding: 12px;
@@ -871,6 +844,9 @@
   .item-showcase .item-art {
     width: 105px;
     height: 105px;
+  }
+  .weapon-compare {
+    margin-bottom: 10px;
   }
   .inspector-note {
     padding-top: 12px;
