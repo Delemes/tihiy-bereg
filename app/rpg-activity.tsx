@@ -1,6 +1,5 @@
 'use client';
 import { PuzzleWindow } from './rpg-puzzle-window';
-import { DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Flame, Fish, Leaf, Wrench, PackageCheck } from 'lucide-react';
 import type { State } from './rpg-model';
 export default function ActivityWindow({
@@ -37,8 +36,8 @@ export default function ActivityWindow({
       <header className="window-header">
         <Icon />
         <div>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
+          <h2 className="window-title">{title}</h2>
+          <p className="window-subtitle">
             {a.done
               ? 'Результат'
               : a.kind === 'grill'
@@ -46,7 +45,7 @@ export default function ActivityWindow({
                 : a.kind === 'fish'
                   ? 'Тяните леску, но уступайте рыбе на рывках'
                   : 'Каждое действие влияет на результат'}
-          </DialogDescription>
+          </p>
         </div>
       </header>
       {a.done ? (
