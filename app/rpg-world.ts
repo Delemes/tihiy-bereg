@@ -1,6 +1,9 @@
 import { drawPassage, passageKind, preparePassageAtlas } from './rpg-passages';
 import { drawArmedHero, combatFeedback } from './rpg-combat-view';
-import { combatInput } from './rpg-controls';
+import { createInput, type InputRuntime } from './rpg-input-runtime';
+import { bodyBob, motionTuning, walkColumn } from './rpg-motion';
+import { pickTarget, promptFor, toInteractable } from './rpg-interactables';
+import type { MotionState } from './rpg-combat';
 import { drawWings } from './rpg-wing-view';
 import { room, indoors, unitScale, finds } from './rpg-regions';
 import {
@@ -11,8 +14,8 @@ import {
 import {
   activePlaces,
   activeEnemies,
-  nearest,
   people,
+  threatened,
   type State,
   type Region,
 } from './rpg-model';
@@ -56,6 +59,7 @@ export function createWorld(
   isPaused: () => boolean,
   update: (s: State) => void,
   _act?: () => void,
+  shared?: InputRuntime,
 ): WorldAPI {
   const c = canvas.getContext('2d')!;
   let frame = 0,
@@ -64,15 +68,15 @@ export function createWorld(
     zoom = 1,
     camX = 0,
     camY = 0,
-    walkDistance = 0,
+    camReady = false,
     walking = false,
     lastRegion = getState().region,
     transition = 0,
-    hitPause = 0,
     drawDelta = 0;
   const feedback = combatFeedback();
-  const keys = new Set<string>(),
-    pressed = new Set<string>();
+  // Один источник ввода на всю игру: страница передаёт свой рантайм,
+  // а мир только читает готовый кадр и добавляет кнопки мыши.
+  const input = shared ?? createInput();
   let cursor: { x: number; y: number } | null = null;
   let mouseActive = false;
   const images: Record<string, HTMLImageElement> = {};
@@ -150,7 +154,45 @@ export function createWorld(
     c.fillStyle = '#f1e6ce';
     c.fillText(t, x, y + 2);
   }
+  /**
+   * Контекстная подсказка у выбранной цели: клавиша с глаголом и имя.
+   * Цвета совпадают с токенами интерфейса, чтобы мир и меню выглядели одним целым.
+   */
+  function prompt(x: number, y: number, text: string, name: string) {
+    const k = indoors(getState().region) ? 1.3 : 1;
+    c.textAlign = 'center';
+    c.font = 'bold ' + Math.round(15 * k) + 'px Georgia';
+    const w =
+      Math.max(c.measureText(text).width, c.measureText(name).width) + 24 * k;
+    const h = 41 * k,
+      top = y - h;
+    c.fillStyle = '#12100dee';
+    c.fillRect(x - w / 2, top, w, h);
+    c.lineWidth = 1;
+    c.strokeStyle = '#c8a35a';
+    c.strokeRect(x - w / 2 + 0.5, top + 0.5, w - 1, h - 1);
+    c.fillStyle = '#e6ddc9';
+    c.fillText(text, x, top + 18 * k);
+    c.font = Math.round(12 * k) + 'px Georgia';
+    c.fillStyle = '#c3b79f';
+    c.fillText(name, x, top + 33 * k);
+  }
+  /** Подсветка цели — тонкое кольцо под ногами вместо россыпи маркеров. */
+  function highlight(x: number, y: number, u: number) {
+    c.save();
+    c.strokeStyle = '#c8a35a99';
+    c.lineWidth = 1.5;
+    c.beginPath();
+    c.ellipse(x, y + 2, 23 * u, 8 * u, 0, 0, Math.PI * 2);
+    c.stroke();
+    c.restore();
+  }
   function hero(s: State) {
+    const motion = s as State & MotionState;
+    // Кадр берётся из фазы шага, а не из пройденных пикселей: анимация
+    // всегда совпадает со скоростью и не дёргает первый кадр.
+    const gait = motion.gait ?? (walking ? 'walk' : 'idle');
+    const phase = motion.stride ?? 0;
     c.save();
     c.translate(s.x, s.y);
     c.scale(unitScale(s.region), unitScale(s.region));
@@ -161,16 +203,19 @@ export function createWorld(
         Math.sin(s.attackFacing) * lean,
       );
     }
+    if ((motion.hurtTime ?? 0) > 0)
+      c.translate(-Math.cos(s.facing) * 3, -Math.sin(s.facing) * 3);
     if (s.invulnerable > 0 && s.dash <= 0)
       c.globalAlpha = Math.sin(time * 40) > 0 ? 0.45 : 1;
     const im = images['/hero-walk.png'];
     const pose = s.attackDelay > 0 ? 0 : s.swing > 0 ? 2 : null;
-    const col =
-      pose ?? (walking ? [0, 1, 2, 1][Math.floor(walkDistance / 12) % 4] : 1);
+    const col = pose ?? walkColumn(phase, gait);
     c.fillStyle = '#111b2366';
     c.beginPath();
     c.ellipse(0, 2, 16, 6, 0, 0, 7);
     c.fill();
+    // Тень остаётся на земле, покачивается только корпус.
+    if (pose === null) c.translate(0, bodyBob(phase, gait, time));
     if (im.complete && im.naturalWidth)
       drawArmedHero(c, im, weaponSprite, s, col);
     c.restore();
@@ -312,6 +357,7 @@ export function createWorld(
   }
   function draw() {
     const s = getState();
+    const motion = s as State & MotionState;
     if (room(s.region))
       zoom = Math.max(0.8, Math.min(1.2, canvas.width / 1280));
     else if (indoors(s.region))
@@ -331,19 +377,38 @@ export function createWorld(
       vw = w / zoom,
       vh = h / zoom;
     const bounds = worldBounds(s.region);
-    camX =
-      indoors(s.region) && !room(s.region)
-        ? (WORLD_W - vw) / 2
-        : Math.max(0, Math.min(bounds.width - vw, s.x - vw / 2));
-    camY =
-      indoors(s.region) && !room(s.region)
-        ? (WORLD_H - vh) / 2
-        : Math.max(0, Math.min(bounds.height - vh, s.y - vh * 0.56));
+    const centered = indoors(s.region) && !room(s.region);
+    // Камера смотрит немного вперёд по движению: при беге видно, куда бежишь.
+    const lead = (v = 0) => Math.max(-1, Math.min(1, v / motionTuning.run)) * 34;
+    const goalX = centered
+      ? (WORLD_W - vw) / 2
+      : Math.max(
+          0,
+          Math.min(bounds.width - vw, s.x + lead(motion.vx) - vw / 2),
+        );
+    const goalY = centered
+      ? (WORLD_H - vh) / 2
+      : Math.max(
+          0,
+          Math.min(bounds.height - vh, s.y + lead(motion.vy) - vh * 0.56),
+        );
+    // Экспоненциальное сглаживание не зависит от частоты кадров.
+    const follow = camReady ? 1 - Math.pow(0.0016, drawDelta) : 1;
+    camX += (goalX - camX) * follow;
+    camY += (goalY - camY) * follow;
+    camReady = true;
+    // Отдача только от сильных попаданий: tickWorld держит её в пределах 6.
+    const amp = Math.min(6, motion.shake ?? 0);
+    const shakeX = amp ? Math.cos(time * 61) * amp : 0,
+      shakeY = amp ? Math.sin(time * 89) * amp : 0;
     c.fillStyle = '#15201c';
     c.fillRect(0, 0, w, h);
     c.save();
     c.scale(zoom, zoom);
-    c.translate(-camX, -camY);
+    c.translate(
+      -Math.round((camX + shakeX) * zoom) / zoom,
+      -Math.round((camY + shakeY) * zoom) / zoom,
+    );
     c.imageSmoothingEnabled = false;
     const a = mapAsset(s.region),
       im = images[a.src];
@@ -363,7 +428,10 @@ export function createWorld(
       );
     }
     drawWings(c, images['/rooms-v4.png'], s.region);
-    const near = nearest(s);
+    const u = unitScale(s.region);
+    // Цель выбирается так же, как в интерфейсе: расстояние плюс мягкий
+    // штраф за отворот, поэтому подсказка и [E] всегда про один объект.
+    const near = pickTarget(activePlaces(s), s, u);
     for (const p of activePlaces(s)) {
       if (p.kind === 'npc') continue;
       if (finds[p.id] && !s.flags.includes('taken:' + p.id)) {
@@ -406,7 +474,8 @@ export function createWorld(
       }
       if (['exit', 'door', 'board'].includes(p.kind)) {
         drawPassage(c, passageSprite, p, s, near?.id === p.id);
-        if (nearBy)
+        // Имя прохода показывает подсказка, когда он выбран целью.
+        if (nearBy && near?.id !== p.id)
           label(
             p.x,
             p.y -
@@ -416,11 +485,13 @@ export function createWorld(
                   ? 225
                   : 150),
             p.name,
-            near?.id === p.id,
           );
-      } else if (nearBy) {
-        c.fillStyle = p.kind === 'encounter' ? '#efba5a' : '#e6d4a9';
-        c.font = 'bold 22px Georgia';
+      } else if (nearBy && near?.id !== p.id) {
+        // Второстепенные точки отмечаются тускло, чтобы не было леса маркеров.
+        c.save();
+        c.globalAlpha = p.kind === 'encounter' ? 0.8 : 0.45;
+        c.fillStyle = p.kind === 'encounter' ? '#efba5a' : '#cbbb95';
+        c.font = (p.kind === 'encounter' ? 'bold 20px' : '16px') + ' Georgia';
         c.textAlign = 'center';
         c.fillText(
           p.kind === 'encounter'
@@ -431,7 +502,7 @@ export function createWorld(
           p.x,
           p.y - 9 - Math.sin(time * 2) * 2,
         );
-        if (near?.id === p.id) label(p.x, p.y - 40, p.name, true);
+        c.restore();
       }
     }
     const actors = [
@@ -451,13 +522,33 @@ export function createWorld(
       else if (a.kind === 'enemy') enemy(s, a.id);
       else {
         npc(a.x, a.y, a.id);
-        label(
-          a.x,
-          a.y - 85 * unitScale(s.region),
-          people[a.id as keyof typeof people]?.name || a.id,
-          near?.id === a.id,
-        );
+        if (near?.id !== a.id)
+          label(
+            a.x,
+            a.y - 85 * u,
+            people[a.id as keyof typeof people]?.name || a.id,
+          );
       }
+    }
+    // Одна цель — одна подсказка: [E] и глагол именно этого объекта.
+    if (near && (!threatened(s) || ['constable', 'notice:law'].includes(near.id))) {
+      const passage = ['exit', 'door', 'board'].includes(near.kind);
+      const lift = passage
+        ? passageKind(near, s) === 'threshold'
+          ? 52
+          : indoors(s.region)
+            ? 232
+            : 157
+        : (near.kind === 'npc' ? 92 : 46) * u;
+      highlight(near.x, near.y, u);
+      prompt(
+        near.x,
+        near.y - lift,
+        promptFor(toInteractable(near)),
+        near.kind === 'npc'
+          ? people[near.id as keyof typeof people]?.name || near.name
+          : near.name,
+      );
     }
     if (s.region === 'mine' && !s.flags.includes('valveOpen')) {
       c.fillStyle = '#488eaa54';
@@ -470,14 +561,14 @@ export function createWorld(
     }
     if ((s.minutes >= 1140 || s.minutes < 360) && !indoors(s.region)) {
       c.fillStyle = '#14234155';
-      c.fillRect(camX, camY, vw, vh);
+      c.fillRect(camX - 12, camY - 12, vw + 24, vh + 24);
     }
     if (s.region === 'mine' || room(s.region)?.[2] === 5) {
       const light = c.createRadialGradient(s.x, s.y - 20, 100, s.x, s.y, 610);
       light.addColorStop(0, '#070c1400');
       light.addColorStop(1, '#03060cbf');
       c.fillStyle = light;
-      c.fillRect(camX, camY, vw, vh);
+      c.fillRect(camX - 12, camY - 12, vw + 24, vh + 24);
     }
     for (const p of s.projectiles) {
       c.save();
@@ -528,20 +619,21 @@ export function createWorld(
     last = t;
     drawDelta = dt;
     transition = Math.max(0, transition - dt);
-    hitPause = Math.max(0, hitPause - dt);
     time = t / 1000;
     walking = false;
     if (lastRegion !== getState().region) {
       lastRegion = getState().region;
       transition = 0.35;
+      // Новая локация — камера ставится сразу, без наезда через полкарты.
+      camReady = false;
       feedback.clear();
       clear();
     }
     let simulated = false;
-    if (!isPaused() && transition < 0.2 && hitPause <= 0) {
+    if (!isPaused() && transition < 0.2) {
       simulated = true;
       const s = getState();
-      const input = combatInput(keys, pressed);
+      const frameInput = input.frame();
       if (cursor) {
         const x = cursor.x / zoom + camX,
           y = cursor.y / zoom + camY;
@@ -562,7 +654,7 @@ export function createWorld(
               Math.hypot(x - a.x, y - a.y + 35 * u) -
               Math.hypot(x - b.x, y - b.y + 35 * u),
           )[0];
-        input.aim = Math.atan2(
+        frameInput.aim = Math.atan2(
           (target?.y ?? y + 26 * u) - s.y,
           (target?.x ?? x) - s.x,
         );
@@ -570,20 +662,19 @@ export function createWorld(
       const n = tickWorld(
         s,
         dt,
-        input,
+        frameInput,
         (x, y, r) =>
           canWalk(x, y, r) &&
           !(r === 'mine' && !s.flags.includes('valveOpen') && y < 545),
       );
       walking = Math.hypot(n.x - s.x, n.y - s.y) > 0.05;
-
-      walkDistance += Math.hypot(n.x - s.x, n.y - s.y) / unitScale(s.region);
-      if (feedback.observe(s, n)) hitPause = 0.035;
+      // Стоп-кадр удара живёт внутри tickWorld: второй раз мир не морозим.
+      feedback.observe(s, n);
       update(n);
     } else if (isPaused()) {
       clear();
     }
-    if (simulated || isPaused()) pressed.clear();
+    if (simulated || isPaused()) input.endFrame();
     draw();
     frame = requestAnimationFrame(tick);
   }
@@ -596,13 +687,8 @@ export function createWorld(
     for (const [button, mask] of [
       [0, 1],
       [2, 2],
-    ]) {
-      const key = 'Mouse' + button;
-      if (mouseActive && e.buttons & mask) {
-        if (!keys.has(key)) pressed.add(key);
-        keys.add(key);
-      } else keys.delete(key);
-    }
+    ])
+      input.key('Mouse' + button, mouseActive && !!(e.buttons & mask));
     if (!(e.buttons & 3)) mouseActive = false;
   };
   const pointerMove = (e: PointerEvent) => {
@@ -623,12 +709,11 @@ export function createWorld(
   const leave = () => {
     cursor = null;
     mouseActive = false;
-    keys.delete('Mouse0');
-    keys.delete('Mouse2');
+    input.key('Mouse0', false);
+    input.key('Mouse2', false);
   };
   const clear = () => {
-    keys.clear();
-    pressed.clear();
+    input.clear();
     cursor = null;
     mouseActive = false;
   };
@@ -643,12 +728,7 @@ export function createWorld(
   window.addEventListener('blur', clear);
   frame = requestAnimationFrame(tick);
   return {
-    key: (k, down) => {
-      if (down) {
-        if (!keys.has(k)) pressed.add(k);
-        keys.add(k);
-      } else keys.delete(k);
-    },
+    key: (k, down) => input.key(k, down),
     destroy: () => {
       cancelAnimationFrame(frame);
       obs.disconnect();

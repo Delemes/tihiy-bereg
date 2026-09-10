@@ -3,7 +3,6 @@ import { useState } from 'react';
 import {
   ArrowUpRight,
   Backpack,
-  Shield,
   Swords,
   Target,
   Sprout,
@@ -11,6 +10,7 @@ import {
 } from 'lucide-react';
 import { has, type State, type Stock, type Weapon } from './rpg-model';
 import { stockInfo, weapons } from './rpg-equipment';
+import { attackFrames, weaponClassNames } from './rpg-weapon-profiles';
 import { maxHealth } from './rpg-core';
 
 const icons: Record<string, number> = {
@@ -67,6 +67,38 @@ export function ItemIcon({ id }: { id: string }) {
     </span>
   );
 }
+/** Разница характеристики с оружием в руках: знак, цвет, короткая подпись. */
+function Delta({
+  value,
+  better,
+  suffix = '',
+  digits = 0,
+}: {
+  value: number;
+  better: 'more' | 'less';
+  suffix?: string;
+  digits?: number;
+}) {
+  if (Math.abs(value) < 0.005) return <em className="ui-tooltip__delta">—</em>;
+  const good = better === 'more' ? value > 0 : value < 0;
+  return (
+    <em
+      className={`ui-tooltip__delta ui-tooltip__delta--${good ? 'up' : 'down'}`}
+    >
+      {value > 0 ? '+' : '−'}
+      {Math.abs(value).toFixed(digits)}
+      {suffix}
+    </em>
+  );
+}
+/**
+ * У дальнего боя дистанция — это полёт снаряда из данных предмета,
+ * у ближнего — реальная зона удара из кадров атаки (профиль её масштабирует).
+ */
+const reachOf = (
+  item: { reach: number; mode?: 'ranged' },
+  frames: { reach: number },
+) => (item.mode === 'ranged' ? item.reach : Math.round(frames.reach));
 type Entry = {
   id: string;
   name: string;
@@ -127,8 +159,25 @@ export function Inventory({
   ];
   const visible = entries.filter((e) => filter === 'all' || e.group === filter),
     chosen = visible.find((e) => e.id === selected) || visible[0];
-  const weapon =
-    chosen?.group === 'weapons' ? weapons[chosen.id as Weapon] : null;
+  const weaponId = chosen?.group === 'weapons' ? (chosen.id as Weapon) : null;
+  const weapon = weaponId ? weapons[weaponId] : null;
+  const held = weapons[s.weapon];
+  // Сравнение считается теми же кадрами атаки, что и бой (§5, §11): сырые
+  // damage и speed из данных предмета ничего не говорят об ощущении удара —
+  // профиль класса меняет и тайминги, и дистанцию, и цену выносливости.
+  const combat =
+    weaponId && weapon
+      ? {
+          item: weapon,
+          light: attackFrames(weaponId, weapon),
+          heavy: attackFrames(weaponId, weapon, 'heavy'),
+        }
+      : null;
+  const heldCombat = {
+    light: attackFrames(s.weapon, held),
+    heavy: attackFrames(s.weapon, held, 'heavy'),
+  };
+  const compare = !!weaponId && weaponId !== s.weapon;
   const capacity = entries.filter((e) => e.count > 0).length;
   return (
     <div className="inventory-v4">
@@ -171,9 +220,10 @@ export function Inventory({
           <ItemIcon id={s.weapon} />
           <div>
             <small>В РУКАХ</small>
-            <b>{weapons[s.weapon].name}</b>
+            <b>{held.name}</b>
             <span>
-              {weapons[s.weapon].damage} урона · {weapons[s.weapon].speed} с
+              {held.damage} урона · замах{' '}
+              {heldCombat.light.startup.toFixed(2)} с
             </span>
           </div>
         </div>
@@ -275,17 +325,122 @@ export function Inventory({
             </div>
             <h3>{chosen.name}</h3>
             <p>{chosen.description}</p>
-            {weapon ? (
-              <div className="weapon-stats">
-                <span>
-                  <Swords size={15} /> Урон <b>{weapon.damage}</b>
-                </span>
-                <span>
-                  <Target size={15} /> Дистанция <b>{weapon.reach}</b>
-                </span>
-                <span>
-                  <Shield size={15} /> Интервал <b>{weapon.speed} с</b>
-                </span>
+            {combat ? (
+              <div className="ui-panel ui-panel--sunken ui-tooltip ui-tooltip--inline weapon-compare">
+                <div className="ui-label">
+                  {compare ? `Против ${held.name}` : 'Сейчас в руках'}
+                </div>
+                <dl className="ui-tooltip__stats">
+                  <dt>Класс</dt>
+                  <dd>{weaponClassNames[combat.light.weaponClass]}</dd>
+                  <dt>Урон</dt>
+                  <dd>
+                    <b>{combat.light.damage}</b>
+                    {compare && (
+                      <Delta
+                        value={combat.light.damage - heldCombat.light.damage}
+                        better="more"
+                      />
+                    )}
+                  </dd>
+                  <dt>Сильный удар</dt>
+                  <dd>
+                    <b>{combat.heavy.damage}</b>
+                    {compare && (
+                      <Delta
+                        value={combat.heavy.damage - heldCombat.heavy.damage}
+                        better="more"
+                      />
+                    )}
+                  </dd>
+                  <dt>Дистанция</dt>
+                  <dd>
+                    <b>{reachOf(combat.item, combat.light)}</b>
+                    {compare && (
+                      <Delta
+                        value={
+                          reachOf(combat.item, combat.light) -
+                          reachOf(held, heldCombat.light)
+                        }
+                        better="more"
+                      />
+                    )}
+                  </dd>
+                  <dt>Замах</dt>
+                  <dd>
+                    <b>{combat.light.startup.toFixed(2)} с</b>
+                    {compare && (
+                      <Delta
+                        value={combat.light.startup - heldCombat.light.startup}
+                        better="less"
+                        digits={2}
+                        suffix=" с"
+                      />
+                    )}
+                  </dd>
+                  <dt>Восстановление</dt>
+                  <dd>
+                    <b>{combat.light.recovery.toFixed(2)} с</b>
+                    {compare && (
+                      <Delta
+                        value={
+                          combat.light.recovery - heldCombat.light.recovery
+                        }
+                        better="less"
+                        digits={2}
+                        suffix=" с"
+                      />
+                    )}
+                  </dd>
+                  <dt>Расход сил</dt>
+                  <dd>
+                    <b>{combat.light.staminaCost}</b>
+                    {compare && (
+                      <Delta
+                        value={
+                          combat.light.staminaCost -
+                          heldCombat.light.staminaCost
+                        }
+                        better="less"
+                      />
+                    )}
+                  </dd>
+                  <dt>Критический удар</dt>
+                  <dd>
+                    <b>{Math.round(combat.light.criticalChance * 100)}%</b>
+                    {compare && (
+                      <Delta
+                        value={
+                          Math.round(combat.light.criticalChance * 100) -
+                          Math.round(heldCombat.light.criticalChance * 100)
+                        }
+                        better="more"
+                        suffix="%"
+                      />
+                    )}
+                  </dd>
+                  {combat.item.ammo && (
+                    <>
+                      <dt>Боеприпас</dt>
+                      <dd>
+                        <b>{stockInfo[combat.item.ammo].name}</b> ×
+                        {s[combat.item.ammo]}
+                      </dd>
+                    </>
+                  )}
+                  {combat.item.status && (
+                    <>
+                      <dt>Эффект</dt>
+                      <dd>
+                        <b>
+                          {combat.item.status === 'bleed'
+                            ? 'кровотечение'
+                            : 'замедление'}
+                        </b>
+                      </dd>
+                    </>
+                  )}
+                </dl>
               </div>
             ) : (
               chosen.group !== 'keys' && (
@@ -294,13 +449,13 @@ export function Inventory({
                 </div>
               )
             )}
-            {weapon ? (
+            {weaponId ? (
               <button
                 className="primary-command"
-                disabled={s.weapon === chosen.id}
-                onClick={() => equip(chosen.id as Weapon)}
+                disabled={s.weapon === weaponId}
+                onClick={() => equip(weaponId)}
               >
-                {s.weapon === chosen.id ? 'Экипировано' : 'Взять в руки'}
+                {s.weapon === weaponId ? 'Экипировано' : 'Взять в руки'}
               </button>
             ) : chosen.group === 'supplies' ? (
               <button

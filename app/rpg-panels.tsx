@@ -17,7 +17,6 @@ import {
   Coins,
   Compass,
 } from 'lucide-react';
-import { DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AnimeFace } from './rpg-message';
 import {
   people,
@@ -113,12 +112,12 @@ export default function Panels({
       <section className="menu-content">
         <header className="window-header">
           <div>
-            <DialogTitle>
+            <h2 className="window-title">
               {tabs.find((t) => t[0] === active)?.[1] || 'Путешествие'}
-            </DialogTitle>
-            <DialogDescription>
+            </h2>
+            <p className="window-subtitle">
               {regionNames[s.region]} · день {s.day} · игра на паузе
-            </DialogDescription>
+            </p>
           </div>
           <span className="ornament">◆</span>
         </header>

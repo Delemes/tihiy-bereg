@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import './rpg-theme.css';
 import './rpg-menu.css';
+import './rpg-ui.css';
 export const metadata: Metadata = {
   title: 'Тихий берег — истории, которые остаются',
   description:
