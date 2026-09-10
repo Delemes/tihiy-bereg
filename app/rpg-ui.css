@@ -827,32 +827,142 @@
 	font-size: var(--ui-size-label);
 }
 
-/* Оружие, метательное и розыск — микрострока над панелью действий. */
-.combat-state-strip {
+/*
+ * Состояние боя (§3, §12): шкала взмаха, серия и метки снаряжения.
+ * Раньше здесь была неменяющаяся строка с названием оружия; теперь шкала
+ * повторяет три отрезка удара — замах, активное окно, восстановление, — а
+ * курсор показывает, где герой находится прямо сейчас.
+ */
+.combat-readout {
 	position: absolute;
 	left: 50%;
 	bottom: 60px;
 	transform: translateX(-50%);
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	gap: var(--ui-gap-1);
 	font-family: var(--ui-font);
-	font-size: var(--ui-size-micro);
-	color: var(--ui-text-muted);
-	white-space: nowrap;
 	pointer-events: none;
 }
 
-.combat-state-strip > span,
-.combat-state-strip > strong {
+.swing-gauge {
+	--swing-tint: var(--ui-text-faint);
+	display: flex;
+	align-items: center;
+	gap: var(--ui-gap-2);
+	padding: 2px 8px;
+	background: var(--ui-veil);
+	border: 1px solid var(--ui-line);
+	border-radius: var(--ui-radius);
+	font-size: var(--ui-size-micro);
+	white-space: nowrap;
+}
+
+.swing-gauge__label {
+	min-width: 104px;
+	color: var(--swing-tint);
+	letter-spacing: var(--ui-tracking-label);
+	text-transform: uppercase;
+}
+
+.swing-gauge__track {
+	position: relative;
+	display: flex;
+	width: 172px;
+	height: 6px;
+	background: #0d0b09;
+	border: 1px solid var(--ui-line);
+	border-radius: 1px;
+	overflow: hidden;
+}
+
+.swing-gauge__seg {
+	display: block;
+	height: 100%;
+	opacity: 0.4;
+}
+
+.swing-gauge__seg.is-startup {
+	background: var(--ui-accent-dim);
+}
+
+.swing-gauge__seg.is-active {
+	background: var(--ui-danger);
+}
+
+.swing-gauge__seg.is-recovery {
+	background: #3a342a;
+}
+
+.swing-gauge.is-startup .swing-gauge__seg.is-startup,
+.swing-gauge.is-active .swing-gauge__seg.is-active,
+.swing-gauge.is-recovery .swing-gauge__seg.is-recovery {
+	opacity: 1;
+}
+
+.swing-gauge__cursor {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	margin-left: -1px;
+	background: var(--ui-text);
+}
+
+.swing-gauge__combo {
+	min-width: 18px;
+	text-align: right;
+	font-size: var(--ui-size-label);
+	color: var(--ui-accent);
+}
+
+.swing-gauge.is-startup {
+	--swing-tint: var(--ui-accent);
+	border-color: var(--ui-accent-dim);
+}
+
+.swing-gauge.is-active {
+	--swing-tint: var(--ui-danger-text);
+	border-color: var(--ui-danger-dim);
+}
+
+.swing-gauge.is-recovery {
+	--swing-tint: var(--ui-text-muted);
+}
+
+.swing-gauge.is-guard {
+	--swing-tint: var(--ui-cold);
+	border-color: #3c4b52;
+}
+
+.swing-gauge.is-dodge {
+	--swing-tint: var(--ui-good);
+}
+
+.swing-gauge.is-hurt,
+.swing-gauge.is-stagger,
+.swing-gauge.is-dead,
+.swing-gauge.is-tired {
+	--swing-tint: var(--ui-danger-text);
+	border-color: var(--ui-danger-dim);
+}
+
+.combat-chips {
+	display: flex;
+	gap: var(--ui-gap-1);
+	font-size: var(--ui-size-micro);
+	color: var(--ui-text-muted);
+}
+
+.combat-chip {
 	padding: 2px 7px;
 	background: var(--ui-veil);
 	border: 1px solid var(--ui-line);
 	border-radius: var(--ui-radius);
-	font-weight: 400;
 }
 
-.combat-state-strip > strong {
+.combat-chip--danger {
 	color: var(--ui-danger-text);
 	border-color: var(--ui-danger-dim);
 }
@@ -939,21 +1049,107 @@
 	pointer-events: none;
 }
 
-.danger-banner {
+/*
+ * Табличка цели вместо баннера «следите за оружием»: имя, здоровье
+ * и то, что враг делает прямо сейчас. Тонкая полоса под здоровьем —
+ * телеграф замаха: пока она заполняется, есть время уйти с линии удара.
+ */
+.target-plate {
 	position: absolute;
 	left: 50%;
-	top: 92px;
+	top: 98px;
 	transform: translateX(-50%);
-	display: flex;
-	align-items: center;
-	gap: var(--ui-gap-2);
-	padding: 4px 12px;
-	background: rgba(44, 18, 13, 0.9);
-	border: 1px solid var(--ui-danger);
+	width: min(320px, calc(100vw - 32px));
+	padding: 5px 10px 6px;
+	background: var(--ui-veil);
+	border: 1px solid var(--ui-line-strong);
+	border-top: 2px solid var(--ui-danger-dim);
 	border-radius: var(--ui-radius);
-	color: var(--ui-danger-text);
 	font-family: var(--ui-font);
+	pointer-events: none;
+}
+
+.target-plate.is-winding {
+	border-top-color: var(--ui-danger);
+}
+
+.target-plate.is-open {
+	border-top-color: var(--ui-good);
+}
+
+.target-plate__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--ui-gap-2);
+	margin-bottom: 3px;
+}
+
+.target-plate__head strong {
+	overflow: hidden;
 	font-size: var(--ui-size-label);
+	font-weight: 400;
+	color: var(--ui-text);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.target-plate__head span {
+	flex-shrink: 0;
+	font-size: var(--ui-size-micro);
+	letter-spacing: var(--ui-tracking-label);
+	text-transform: uppercase;
+	color: var(--ui-text-muted);
+}
+
+.target-plate.is-winding .target-plate__head span {
+	color: var(--ui-danger-text);
+}
+
+.target-plate.is-open .target-plate__head span {
+	color: var(--ui-good);
+}
+
+.target-plate__bar,
+.target-plate__tell {
+	height: 6px;
+	background: #0d0b09;
+	border: 1px solid var(--ui-line);
+	border-radius: 1px;
+	overflow: hidden;
+}
+
+.target-plate__bar i {
+	display: block;
+	height: 100%;
+	background: var(--ui-hp);
+	transition: width 90ms linear;
+}
+
+.target-plate__tell {
+	height: 4px;
+	margin-top: 3px;
+	border-color: var(--ui-danger-dim);
+}
+
+.target-plate__tell i {
+	display: block;
+	height: 100%;
+	background: var(--ui-danger);
+}
+
+.target-plate__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-gap-2);
+	margin-top: 3px;
+	font-size: var(--ui-size-micro);
+	color: var(--ui-text-faint);
+}
+
+.target-plate__tags b {
+	font-weight: 400;
+	color: var(--ui-text-dim);
 }
 
 .touch-move {
@@ -1047,16 +1243,22 @@
 		height: 16px;
 	}
 
-	.combat-state-strip {
+	.combat-readout {
 		bottom: 56px;
 		max-width: 96vw;
-		flex-wrap: wrap;
-		justify-content: center;
-		white-space: normal;
 	}
 
-	.combat-state-strip > span:first-child {
+	.swing-gauge__label {
 		display: none;
+	}
+
+	.swing-gauge__track {
+		width: 132px;
+	}
+
+	.combat-chips {
+		flex-wrap: wrap;
+		justify-content: center;
 	}
 
 	.interact-prompt {
@@ -1077,9 +1279,9 @@
 		max-width: 236px;
 	}
 
-	.danger-banner {
-		top: 118px;
-		font-size: var(--ui-size-micro);
+	.target-plate {
+		top: 116px;
+		width: calc(100vw - 20px);
 	}
 }
 
@@ -1140,6 +1342,10 @@
 	.objective-note {
 		bottom: 66px;
 		padding: 6px var(--ui-gap-2);
+	}
+
+	.target-plate {
+		top: 82px;
 	}
 }
 
