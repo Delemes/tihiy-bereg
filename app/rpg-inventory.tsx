@@ -67,6 +67,26 @@ export function ItemIcon({ id }: { id: string }) {
     </span>
   );
 }
+/** Разница характеристики с оружием в руках: знак, цвет, короткая подпись. */
+function Delta({
+  value,
+  better,
+  suffix = '',
+}: {
+  value: number;
+  better: 'more' | 'less';
+  suffix?: string;
+}) {
+  if (Math.abs(value) < 0.005) return <em>—</em>;
+  const good = better === 'more' ? value > 0 : value < 0;
+  return (
+    <em className={good ? 'better' : 'worse'}>
+      {value > 0 ? '+' : '−'}
+      {Math.round(Math.abs(value) * 100) / 100}
+      {suffix}
+    </em>
+  );
+}
 type Entry = {
   id: string;
   name: string;
@@ -129,6 +149,8 @@ export function Inventory({
     chosen = visible.find((e) => e.id === selected) || visible[0];
   const weapon =
     chosen?.group === 'weapons' ? weapons[chosen.id as Weapon] : null;
+  const held = weapons[s.weapon],
+    compare = weapon && chosen?.id !== s.weapon;
   const capacity = entries.filter((e) => e.count > 0).length;
   return (
     <div className="inventory-v4">
@@ -171,9 +193,9 @@ export function Inventory({
           <ItemIcon id={s.weapon} />
           <div>
             <small>В РУКАХ</small>
-            <b>{weapons[s.weapon].name}</b>
+            <b>{held.name}</b>
             <span>
-              {weapons[s.weapon].damage} урона · {weapons[s.weapon].speed} с
+              {held.damage} урона · замах {held.speed} с
             </span>
           </div>
         </div>
@@ -276,17 +298,40 @@ export function Inventory({
             <h3>{chosen.name}</h3>
             <p>{chosen.description}</p>
             {weapon ? (
-              <div className="weapon-stats">
-                <span>
-                  <Swords size={15} /> Урон <b>{weapon.damage}</b>
-                </span>
-                <span>
-                  <Target size={15} /> Дистанция <b>{weapon.reach}</b>
-                </span>
-                <span>
-                  <Shield size={15} /> Интервал <b>{weapon.speed} с</b>
-                </span>
-              </div>
+              <>
+                {compare && (
+                  <p className="compare-note">
+                    Сравнение с оружием в руках: {held.name}
+                  </p>
+                )}
+                <div className="weapon-stats">
+                  <span>
+                    <Swords size={15} /> Урон <b>{weapon.damage}</b>
+                    {compare && (
+                      <Delta
+                        value={weapon.damage - held.damage}
+                        better="more"
+                      />
+                    )}
+                  </span>
+                  <span>
+                    <Target size={15} /> Дистанция <b>{weapon.reach}</b>
+                    {compare && (
+                      <Delta value={weapon.reach - held.reach} better="more" />
+                    )}
+                  </span>
+                  <span>
+                    <Shield size={15} /> Замах <b>{weapon.speed} с</b>
+                    {compare && (
+                      <Delta
+                        value={weapon.speed - held.speed}
+                        better="less"
+                        suffix=" с"
+                      />
+                    )}
+                  </span>
+                </div>
+              </>
             ) : (
               chosen.group !== 'keys' && (
                 <div className="item-sell-value">
