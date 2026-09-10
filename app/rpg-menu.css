@@ -731,27 +731,6 @@
 .lesson-detail .primary-command {
   width: 100%;
 }
-.hero-hud,
-.action-dock,
-.interact-prompt {
-  background: linear-gradient(110deg, #21352af5, #15271ef5);
-  border-color: #b39e66;
-  box-shadow:
-    0 0 0 2px #15231d,
-    0 0 0 3px #637051,
-    0 7px 25px #0005;
-}
-.hero-hud {
-  border-radius: 0;
-}
-.action-dock button {
-  background: #243b2b;
-  border-color: #6d7c52;
-}
-.combat-state-strip {
-  background: #16271de8;
-  border-color: #61734c;
-}
 .quiet,
 .help-scroll p,
 .person-sheet p,
