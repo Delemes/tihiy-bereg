@@ -16,6 +16,7 @@
 	--ui-panel-raised: #232019;
 	--ui-panel-sunken: #14120f;
 	--ui-scrim: rgba(8, 7, 6, 0.62);
+	--ui-veil: rgba(18, 16, 13, 0.88);
 
 	/* Рамки */
 	--ui-line: #3b342a;
@@ -33,6 +34,7 @@
 	--ui-accent-dim: #8d7038;
 	--ui-danger: #a8402f;
 	--ui-danger-dim: #6d2a1f;
+	--ui-danger-text: #d0805f;
 	--ui-cold: #5b7d8c;
 	--ui-good: #6f8f4e;
 
@@ -503,6 +505,642 @@
 .ui-layer > * {
 	min-width: 0;
 	outline: none;
+}
+
+/*
+ * HUD (§6, §12) — один слой, одна палитра.
+ *
+ * До этого шапку и панель действий красили три файла подряд: globals.css
+ * давал болотную плашку, rpg-theme.css перекрашивал её в холодную сталь,
+ * rpg-menu.css возвращал зелёный градиент. На экране жила смесь двух
+ * палитр с тройными контурными тенями. Геометрия, цвет и адаптив HUD живут здесь.
+ *
+ * Читается сверху вниз: жизнь и силы → место → время. Снизу: цель дня,
+ * подсказка действия, состояние боя, панель действий.
+ */
+.hud-top {
+	position: absolute;
+	top: 14px;
+	left: 16px;
+	right: 16px;
+	z-index: 10;
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--ui-gap-3);
+	font-family: var(--ui-font);
+	pointer-events: none;
+}
+
+.hud-top button {
+	pointer-events: auto;
+}
+
+.hero-hud {
+	width: 244px;
+	display: flex;
+	gap: var(--ui-gap-2);
+	padding: var(--ui-gap-2);
+	background: var(--ui-panel);
+	border: 1px solid var(--ui-line-strong);
+	box-shadow: inset 0 0 0 1px var(--ui-line-inner);
+	border-radius: var(--ui-radius);
+}
+
+.hero-sigil {
+	position: relative;
+	width: 38px;
+	height: 46px;
+	flex-shrink: 0;
+	overflow: hidden;
+	border: 1px solid var(--ui-line);
+	background: var(--ui-panel-sunken);
+	margin: 0;
+}
+
+.hud-hero-face {
+	display: block;
+	position: absolute;
+	inset: 0;
+	background-image: url('/hero-walk.png');
+	background-size: 280px 373px;
+	background-position: -119px -5px;
+	image-rendering: pixelated;
+}
+
+.hero-sigil > span {
+	position: absolute;
+	z-index: 2;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: auto;
+	padding: 1px 0;
+	text-align: center;
+	font-size: var(--ui-size-micro);
+	color: var(--ui-accent);
+	background: var(--ui-veil);
+	border: 0;
+	border-top: 1px solid var(--ui-line);
+}
+
+.hero-vitals {
+	flex: 1;
+	min-width: 0;
+}
+
+.hero-name {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--ui-gap-2);
+	margin-bottom: 5px;
+	font-size: var(--ui-size-body);
+	color: var(--ui-text);
+}
+
+.hero-name > span {
+	font-size: var(--ui-size-micro);
+	color: var(--ui-text-muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.vital-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-gap-1);
+	margin: 3px 0;
+}
+
+.vital-row > small {
+	width: 22px;
+	font-size: var(--ui-size-micro);
+	letter-spacing: var(--ui-tracking-label);
+	color: var(--ui-text-faint);
+}
+
+.vital-row > b {
+	min-width: 22px;
+	text-align: right;
+	font-size: var(--ui-size-micro);
+	font-weight: 400;
+	color: var(--ui-text-dim);
+}
+
+.vital-track {
+	flex: 1;
+	height: 8px;
+	background: #0d0b09;
+	border: 1px solid var(--ui-line);
+	border-radius: 1px;
+	overflow: hidden;
+}
+
+.vital-track i {
+	display: block;
+	height: 100%;
+	transition: width 90ms linear;
+}
+
+.vital-track.health i {
+	background: var(--ui-hp);
+}
+
+.vital-track.stamina i {
+	background: var(--ui-stamina);
+}
+
+.vital-extras {
+	display: flex;
+	gap: var(--ui-gap-3);
+	margin-top: 6px;
+	font-size: var(--ui-size-micro);
+	color: var(--ui-text-muted);
+}
+
+.vital-extras span {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+}
+
+.danger-text {
+	color: var(--ui-danger-text) !important;
+}
+
+/* Название места — надпись на мире, без плашки и градиента. */
+.location-plaque {
+	min-width: 0;
+	padding: 2px 0;
+	background: none;
+	text-align: center;
+	text-shadow: 0 2px 4px #000;
+}
+
+.location-plaque small {
+	display: block;
+	font-size: var(--ui-size-micro);
+	letter-spacing: var(--ui-tracking-label);
+	color: var(--ui-text-faint);
+}
+
+.location-plaque strong {
+	display: block;
+	margin-top: 2px;
+	font-size: var(--ui-size-title);
+	font-weight: 400;
+	color: var(--ui-text);
+}
+
+.location-plaque > span {
+	font-size: var(--ui-size-micro);
+	letter-spacing: 0.32em;
+	color: var(--ui-text-faint);
+}
+
+.time-hud {
+	min-width: 132px;
+	text-align: right;
+	text-shadow: 0 1px 3px #000;
+}
+
+.time-hud > div:first-child {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--ui-gap-2);
+	font-size: var(--ui-size-label);
+	color: var(--ui-text-dim);
+}
+
+.time-hud b {
+	margin-left: var(--ui-gap-2);
+	font-weight: 400;
+	color: var(--ui-text);
+}
+
+.top-controls {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--ui-gap-1);
+	margin-top: var(--ui-gap-2);
+}
+
+.top-controls button {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 8px;
+	background: var(--ui-panel);
+	border: 1px solid var(--ui-line-strong);
+	border-radius: var(--ui-radius);
+	color: var(--ui-text-dim);
+}
+
+.top-controls button:hover {
+	border-color: var(--ui-accent-dim);
+}
+
+.top-controls kbd {
+	font-size: var(--ui-size-micro);
+	color: var(--ui-text-faint);
+}
+
+/* Цель дня: одна строка слева, без градиентов и теней. */
+.objective-note {
+	position: absolute;
+	left: 16px;
+	bottom: 74px;
+	max-width: 268px;
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-gap-2);
+	padding: var(--ui-gap-2);
+	background: var(--ui-veil);
+	border: 0;
+	border-left: 2px solid var(--ui-accent-dim);
+	box-shadow: none;
+	color: var(--ui-text-dim);
+	font-family: var(--ui-font);
+}
+
+.objective-note > svg {
+	margin-top: 2px;
+	width: 15px;
+	height: 15px;
+	color: var(--ui-accent-dim);
+}
+
+.objective-note strong {
+	display: block;
+	margin-bottom: 2px;
+	font-size: var(--ui-size-label);
+	font-weight: 700;
+	color: var(--ui-text);
+}
+
+.objective-note span {
+	display: block;
+	font-size: var(--ui-size-micro);
+	color: var(--ui-text-muted);
+}
+
+.objective-note button {
+	margin-left: auto;
+	padding: 1px 5px;
+	border: 1px solid var(--ui-line);
+	border-radius: var(--ui-radius);
+	font-size: var(--ui-size-micro);
+	color: var(--ui-text-faint);
+}
+
+/* Экранная кнопка действия для пальцев; на клавиатуре табличку рисует мир. */
+.interact-prompt {
+	position: absolute;
+	left: 50%;
+	bottom: 80px;
+	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+	gap: var(--ui-gap-2);
+	padding: 5px 12px 5px 5px;
+	background: rgba(18, 16, 13, 0.9);
+	border: 1px solid var(--ui-line-strong);
+	border-radius: var(--ui-radius);
+	box-shadow: none;
+	color: var(--ui-text);
+	font-family: var(--ui-font);
+	font-size: var(--ui-size-body);
+	white-space: nowrap;
+}
+
+.interact-prompt kbd {
+	display: grid;
+	place-items: center;
+	width: 24px;
+	height: 24px;
+	background: var(--ui-panel-raised);
+	border: 1px solid var(--ui-accent-dim);
+	color: var(--ui-accent);
+	font-size: var(--ui-size-label);
+}
+
+/* Оружие, метательное и розыск — микрострока над панелью действий. */
+.combat-state-strip {
+	position: absolute;
+	left: 50%;
+	bottom: 60px;
+	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+	gap: var(--ui-gap-1);
+	font-family: var(--ui-font);
+	font-size: var(--ui-size-micro);
+	color: var(--ui-text-muted);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+.combat-state-strip > span,
+.combat-state-strip > strong {
+	padding: 2px 7px;
+	background: var(--ui-veil);
+	border: 1px solid var(--ui-line);
+	border-radius: var(--ui-radius);
+	font-weight: 400;
+}
+
+.combat-state-strip > strong {
+	color: var(--ui-danger-text);
+	border-color: var(--ui-danger-dim);
+}
+
+/* Панель действий: кнопки одного размера, без градиентов и тройных рамок. */
+.action-dock {
+	position: absolute;
+	left: 50%;
+	bottom: 14px;
+	transform: translateX(-50%);
+	display: flex;
+	gap: var(--ui-gap-1);
+	padding: var(--ui-gap-1);
+	background: var(--ui-panel);
+	border: 1px solid var(--ui-line-strong);
+	box-shadow: inset 0 0 0 1px var(--ui-line-inner);
+	border-radius: var(--ui-radius);
+}
+
+.action-dock button {
+	width: 42px;
+	height: 42px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 3px;
+	background: var(--ui-panel-raised);
+	border: 1px solid var(--ui-line);
+	border-radius: var(--ui-radius);
+	color: var(--ui-text-dim);
+	transition:
+		background var(--ui-speed) linear,
+		border-color var(--ui-speed) linear;
+}
+
+.action-dock button:hover:not(:disabled) {
+	background: #2f2a20;
+	border-color: var(--ui-accent-dim);
+}
+
+.action-dock button:active:not(:disabled) {
+	background: var(--ui-panel-sunken);
+	transform: translateY(1px);
+}
+
+.action-dock button svg {
+	width: 19px;
+	height: 19px;
+}
+
+.action-dock kbd {
+	font-size: 9px;
+	line-height: 1;
+	color: var(--ui-text-faint);
+}
+
+.dock-divider {
+	width: 1px;
+	margin: 3px 2px;
+	background: var(--ui-line);
+}
+
+.throw-glyph {
+	font-size: 19px;
+	line-height: 1;
+}
+
+/* Последняя строка журнала — тихая подпись, а не всплывающее окно. */
+.world-notice {
+	position: absolute;
+	left: 16px;
+	bottom: 20px;
+	max-width: min(430px, calc(50vw - 190px));
+	padding: 4px 9px;
+	background: var(--ui-veil);
+	border: 0;
+	border-left: 2px solid var(--ui-accent-dim);
+	color: var(--ui-text-dim);
+	font-family: var(--ui-font);
+	font-size: var(--ui-size-label);
+	line-height: 1.4;
+	text-shadow: none;
+	pointer-events: none;
+}
+
+.danger-banner {
+	position: absolute;
+	left: 50%;
+	top: 92px;
+	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+	gap: var(--ui-gap-2);
+	padding: 4px 12px;
+	background: rgba(44, 18, 13, 0.9);
+	border: 1px solid var(--ui-danger);
+	border-radius: var(--ui-radius);
+	color: var(--ui-danger-text);
+	font-family: var(--ui-font);
+	font-size: var(--ui-size-label);
+}
+
+.touch-move {
+	display: none;
+}
+
+@media (max-width: 1000px) {
+	.hero-hud {
+		width: 218px;
+	}
+
+	.location-plaque strong {
+		font-size: 17px;
+	}
+
+	.time-hud {
+		min-width: 118px;
+	}
+
+	.objective-note {
+		max-width: 232px;
+	}
+
+	.world-notice {
+		max-width: 250px;
+	}
+}
+
+@media (max-width: 700px) {
+	.hud-top {
+		top: 10px;
+		left: 10px;
+		right: 10px;
+		gap: var(--ui-gap-2);
+	}
+
+	.hero-hud {
+		width: 198px;
+		padding: 6px;
+	}
+
+	.hero-sigil {
+		display: none;
+	}
+
+	.location-plaque {
+		position: absolute;
+		top: 84px;
+		left: 50%;
+		transform: translateX(-50%);
+	}
+
+	.location-plaque small,
+	.location-plaque > span {
+		display: none;
+	}
+
+	.location-plaque strong {
+		font-size: 16px;
+	}
+
+	.time-hud {
+		min-width: 86px;
+	}
+
+	.time-hud > div:first-child {
+		gap: var(--ui-gap-1);
+		font-size: var(--ui-size-micro);
+	}
+
+	.time-hud b {
+		margin-left: var(--ui-gap-1);
+	}
+
+	.top-controls kbd {
+		display: none;
+	}
+
+	.action-dock {
+		bottom: 10px;
+		max-width: calc(100vw - 16px);
+	}
+
+	.action-dock button {
+		width: 34px;
+		height: 38px;
+	}
+
+	.action-dock button svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	.combat-state-strip {
+		bottom: 56px;
+		max-width: 96vw;
+		flex-wrap: wrap;
+		justify-content: center;
+		white-space: normal;
+	}
+
+	.combat-state-strip > span:first-child {
+		display: none;
+	}
+
+	.interact-prompt {
+		bottom: 84px;
+		max-width: calc(100vw - 24px);
+		font-size: var(--ui-size-label);
+	}
+
+	.world-notice {
+		left: 10px;
+		bottom: 118px;
+		max-width: calc(100vw - 20px);
+	}
+
+	.objective-note {
+		left: 10px;
+		bottom: 158px;
+		max-width: 236px;
+	}
+
+	.danger-banner {
+		top: 118px;
+		font-size: var(--ui-size-micro);
+	}
+}
+
+@media (pointer: coarse) {
+	.touch-move {
+		position: absolute;
+		right: 12px;
+		bottom: 64px;
+		display: grid;
+		grid-template-columns: repeat(3, 40px);
+		grid-template-rows: repeat(2, 40px);
+		gap: 3px;
+		opacity: 0.85;
+	}
+
+	.touch-move button {
+		background: var(--ui-veil);
+		border: 1px solid var(--ui-line-strong);
+		border-radius: var(--ui-radius);
+		color: var(--ui-text-dim);
+		font-size: 18px;
+		touch-action: none;
+	}
+
+	.touch-move button:first-child {
+		grid-column: 2;
+	}
+
+	.touch-move button:nth-child(2) {
+		grid-column: 1;
+		grid-row: 2;
+	}
+
+	.touch-move button:nth-child(3) {
+		grid-column: 2;
+		grid-row: 2;
+	}
+
+	.touch-move button:nth-child(4) {
+		grid-column: 3;
+		grid-row: 2;
+	}
+
+	.objective-note {
+		max-width: 204px;
+	}
+}
+
+@media (max-height: 620px) {
+	.hud-top {
+		top: 10px;
+	}
+
+	.location-plaque strong {
+		font-size: 17px;
+	}
+
+	.objective-note {
+		bottom: 66px;
+		padding: 6px var(--ui-gap-2);
+	}
 }
 
 @keyframes ui-rise {
