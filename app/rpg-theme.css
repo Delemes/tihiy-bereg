@@ -1,140 +1,43 @@
-/* Shared window skin: ink-blue enamel, aged brass edges, restrained selection. */
-:root {
-  --paper: #e8dfcb;
-  --line: #3d4a55;
-  --gold: #d7bd80;
-  --serif: Georgia, 'Times New Roman', serif;
-}
-/* Рамку окна держит сама поверхность, а не слот стороннего диалога. */
-.rpg-menu,
+/*
+ * Геометрия игровых окон и поверхности, которых нет в rpg-menu.css:
+ * окно занятия, головоломки, список заданий, жители, справка, перки.
+ *
+ * Раньше файл держал собственную палитру «холодная сталь» и перекрашивал ею окно
+ * меню поверх globals.css, а rpg-menu.css перекрашивал всё это в зелень: три
+ * палитры на одном экране, синие ценники в зелёном рюкзаке. Теперь хром меню
+ * целиком принадлежит rpg-menu.css, а здесь остались только размеры и те блоки,
+ * у которых другого владельца нет. Цвета — только токены --ui-* из rpg-ui.css.
+ */
+
+/* Окно занятия (готовка, рыбалка, верстак) */
 .activity-window {
-  background: #131c27;
-  color: #e7e1d3;
-  border: 2px solid #a08d65;
+  width: min(690px, calc(100vw - 40px));
+  max-height: calc(100dvh - 32px);
+  padding: 24px;
+  overflow: auto;
+  background: var(--ui-panel);
+  color: var(--ui-text);
+  border: var(--ui-border) solid var(--ui-line-strong);
+  border-radius: var(--ui-radius);
   box-shadow:
-    0 0 0 2px #10151d,
-    0 0 0 4px #44515a,
-    0 20px 80px #000b;
-  border-radius: 3px;
+    inset 0 0 0 1px var(--ui-line-inner),
+    0 24px 70px rgba(0, 0, 0, 0.55);
+  font-family: var(--ui-font);
 }
 .rpg-menu {
-  width: min(1180px, calc(100vw - 40px));
   max-height: calc(100dvh - 40px);
 }
-.menu-shell {
-  display: flex;
-  flex-direction: column;
-  height: min(760px, calc(100dvh - 48px));
-  min-height: 0;
-}
-.menu-sidebar {
-  width: 100%;
-  height: 77px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 16px;
-  padding: 10px 18px;
-  background: #1b2734;
-  border: 0;
-  border-bottom: 1px solid #697063;
-}
-.menu-brand {
-  border: 0;
-  padding: 0;
-  margin: 0 8px 0 0;
-  min-width: 116px;
-}
-.menu-brand > span {
-  font-size: 8px;
-  letter-spacing: 2px;
-  color: #c6b586;
-}
-.menu-brand strong {
-  font: 19px/1.2 var(--serif);
-  margin-top: 3px;
-  color: #f0e8d5;
-}
-.menu-sidebar nav {
-  display: flex;
-  gap: 2px;
-  flex: 1;
-  justify-content: center;
-}
-.menu-sidebar nav button {
-  padding: 12px 10px;
-  gap: 7px;
-  font:
-    14px 'Segoe UI',
-    sans-serif;
-  color: #b5bdc4;
-  white-space: nowrap;
-  position: relative;
-}
-.menu-sidebar nav button > span {
-  display: none;
-}
-.menu-sidebar nav button.selected {
-  color: #f5dfac;
-  background: #2b3744;
-  border-color: #60717c;
-  box-shadow: inset 0 -2px #d7bd80;
-}
-.menu-sidebar nav button:hover {
-  background: #2b3744;
-}
-.menu-purse {
-  display: none;
-}
-.menu-sidebar .save-command,
-.menu-sidebar .back-command {
-  padding: 9px 6px;
-  font-size: 0;
-  gap: 0;
-  color: #d4c6a8;
-}
-.menu-sidebar .save-command svg,
-.menu-sidebar .back-command svg {
-  width: 21px;
-  height: 21px;
-}
-.menu-content {
-  padding: 18px 20px 20px;
-  min-height: 0;
-  overflow: auto;
-  background: #131c27;
-}
-.window-header {
-  padding-bottom: 11px;
-  margin-bottom: 16px;
-  border-color: #354451;
-}
-.window-title {
-  margin: 0;
-  font-size: 23px;
-  color: #eee6d4;
-}
+.window-title,
 .window-subtitle {
   margin: 0;
-  color: #8e9ca8;
-  font-size: 11px;
 }
-.primary-command {
-  color: #f3e1b2;
-  background: #334753;
-  border: 1px solid #85918b;
-  box-shadow: inset 0 0 0 2px #263843;
-  font: 16px var(--serif);
-  padding: 12px 16px;
+.menu-sidebar nav button {
+  white-space: nowrap;
 }
-.primary-command:disabled {
-  opacity: 0.45;
-}
+
+/* Рюкзак: размеры и сетка. Цвет задаёт rpg-menu.css. */
 .inventory-v4 {
   display: grid;
-  grid-template-columns: 210px minmax(260px, 1fr) 238px;
-  gap: 17px;
   min-height: 465px;
 }
 .equipment-sheet,
@@ -143,8 +46,6 @@
   min-width: 0;
 }
 .equipment-sheet {
-  border: 1px solid #41515d;
-  background: #1a2632;
   padding: 15px 12px;
 }
 .hero-sheet-title {
@@ -154,34 +55,26 @@
 }
 .hero-sheet-title small {
   display: block;
-  font-size: 8px;
-  letter-spacing: 1.7px;
-  color: #9aaab5;
 }
 .hero-sheet-title h3 {
-  color: #f0e6cc;
-  font-size: 23px;
+  font-size: 22px;
   margin: 5px 0;
 }
 .hero-sheet-title > b {
   width: 39px;
   height: 47px;
   text-align: center;
-  border: 1px solid #9c8e67;
-  color: #e5cd91;
-  font: 24px var(--serif);
+  font: 23px var(--ui-font);
   padding: 3px;
 }
 .hero-sheet-title > b small {
-  font-size: 8px;
+  font-size: 9px;
   letter-spacing: 1px;
 }
 .paperdoll {
   height: 205px;
   position: relative;
   margin: 8px 0 18px;
-  background: radial-gradient(ellipse at 50% 75%, #56606a33, transparent 65%);
-  border-bottom: 1px solid #3b4c59;
 }
 .paperdoll-hero {
   position: absolute;
@@ -201,7 +94,6 @@
   width: 72px;
   height: 12px;
   border-radius: 50%;
-  background: #060b1280;
   left: 50%;
   top: 178px;
   transform: translateX(-50%);
@@ -212,8 +104,6 @@
   left: 0;
   width: 100%;
   text-align: center;
-  font-size: 9px;
-  color: #8fa0ac;
 }
 .sheet-vital {
   margin: 10px 0;
@@ -221,28 +111,17 @@
 .sheet-vital > span {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
-  color: #aebac1;
 }
 .sheet-vital b {
-  font-size: 10px;
-  font-weight: 500;
-  color: #e2dccb;
+  font-weight: 400;
 }
 .sheet-vital > i {
   display: block;
-  height: 7px;
-  background: #0d141e;
-  border: 1px solid #667073;
   margin-top: 5px;
 }
 .sheet-vital em {
   display: block;
   height: 100%;
-  background: #b36c5b;
-}
-.sheet-vital.stamina em {
-  background: #8aa47b;
 }
 .equipped-weapon {
   display: flex;
@@ -250,31 +129,24 @@
   align-items: center;
   margin-top: 17px;
   padding-top: 12px;
-  border-top: 1px solid #3b4c59;
 }
 .equipped-weapon .item-art {
   width: 43px;
   height: 43px;
   flex-shrink: 0;
-  border: 1px solid #586371;
 }
 .equipped-weapon small,
 .equipped-weapon b,
 .equipped-weapon div > span {
   display: block;
 }
-.equipped-weapon small {
-  font-size: 8px;
-  color: #94a2ae;
-  letter-spacing: 1px;
-}
 .equipped-weapon b {
-  font: 14px var(--serif);
+  font: 14px var(--ui-font);
   margin: 4px 0;
 }
 .equipped-weapon div > span {
-  font-size: 9px;
-  color: #92a2af;
+  font-size: var(--ui-size-micro);
+  color: var(--ui-text-muted);
 }
 .growth-link {
   display: flex;
@@ -282,13 +154,9 @@
   gap: 6px;
   width: 100%;
   padding: 12px 0 0;
-  color: #d4c08c;
-  font-size: 12px;
 }
 .growth-link > span {
   margin-left: auto;
-  color: #a6b8c3;
-  font-size: 10px;
 }
 .pack-title {
   display: flex;
@@ -298,33 +166,16 @@
   min-height: 36px;
 }
 .pack-title h3 {
-  font: 19px var(--serif);
+  font: 19px var(--ui-font);
   margin: 0;
-  color: #e9e1d1;
 }
 .pack-title > span {
-  font-size: 10px;
-  color: #91a0ad;
   white-space: nowrap;
 }
 .item-filters {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  border-bottom: 1px solid #3c4c58;
   padding: 0 0 10px;
   margin-bottom: 12px;
-}
-.item-filters button {
-  font-size: 10px;
-  padding: 5px 7px;
-  border: 1px solid #384958;
-  color: #9eacb5;
-}
-.item-filters button.active {
-  background: #314551;
-  border-color: #a89972;
-  color: #ebdbb2;
 }
 .item-slots {
   display: grid;
@@ -343,9 +194,6 @@
   min-width: 0;
   height: 86px;
   padding: 4px 3px 2px;
-  border: 1px solid #40515e;
-  background: #0f1721;
-  box-shadow: inset 0 0 0 2px #202d38;
 }
 .item-art {
   display: block;
@@ -364,54 +212,37 @@
   opacity: 0.27;
   filter: saturate(0.2);
 }
-.item-slot.selected {
-  border-color: #d1b97e;
-  box-shadow:
-    inset 0 0 0 2px #8c795454,
-    0 0 0 1px #c6b077;
-  background: #253442;
-}
 .item-slot.equipped:before {
   content: '';
   position: absolute;
   left: 0;
   top: 0;
-  border-top: 10px solid #9caf89;
+  border-top: 10px solid transparent;
   border-right: 10px solid transparent;
 }
 .item-slot > b {
   position: absolute;
   right: 6px;
   top: 3px;
-  font-size: 11px;
-  color: #f6e8cb;
-  text-shadow: 1px 1px 2px #000;
+  font-size: var(--ui-size-micro);
 }
 .item-slot > i {
   position: absolute;
   right: 5px;
   top: 4px;
   font-size: 9px;
-  color: #b7cca5;
 }
 .slot-name {
-  font-size: 9px;
   line-height: 1.2;
   text-align: center;
-  color: #acb9c4;
   display: block;
   width: 100%;
   overflow: hidden;
-  max-height: 23px;
-}
-.item-slot.selected .slot-name {
-  color: #f0e1bc;
+  max-height: 24px;
 }
 .item-symbol {
-  background: #151f2c;
   display: grid;
   place-items: center;
-  color: #c3b28b;
 }
 .item-symbol svg {
   width: 60%;
@@ -421,30 +252,21 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  border-top: 1px solid #384a59;
   margin-top: 14px;
   padding-top: 12px;
-  color: #d8c28d;
-  font-size: 14px;
 }
 .pack-footer > span {
-  color: #7f939f;
-  font-size: 9px;
   margin-left: auto;
   max-width: 180px;
   text-align: right;
 }
 .item-inspector {
-  border-left: 1px solid #374957;
   padding: 3px 0 0 17px;
   display: flex;
   align-items: stretch;
   flex-direction: column;
 }
 .item-kind {
-  color: #8b9ca7;
-  font-size: 9px;
-  letter-spacing: 2px;
   text-transform: uppercase;
 }
 .item-showcase {
@@ -452,106 +274,103 @@
   min-height: 131px;
   display: grid;
   place-items: center;
-  border: 1px solid #344554;
-  background: #101923;
 }
 .item-showcase .item-art {
   width: 125px;
   height: 125px;
 }
 .item-inspector h3 {
-  font-size: 23px;
-  color: #efe5cd;
+  font-size: 22px;
   margin: 0 0 9px;
 }
 .item-inspector > p {
-  color: #aebac3;
-  font-size: 12px;
-  line-height: 1.7;
-  margin: 0 0 20px;
+  margin: 0 0 18px;
   min-height: 44px;
 }
 .item-sell-value {
   display: flex;
   justify-content: space-between;
-  color: #8f9eaa;
-  font-size: 11px;
-  margin: 0 0 22px;
-  border-block: 1px solid #314352;
+  font-size: var(--ui-size-label);
+  margin: 0 0 20px;
   padding: 10px 0;
 }
-.item-sell-value b {
-  color: #d2c49d;
-}
-/*
- * Сравнение оружия рисует дизайн-система (.ui-tooltip в rpg-ui.css).
- * Раньше здесь жила собственная таблица со своими цветами дельт;
- * теперь тема задаёт только место блока в колонке инспектора.
- */
+/* Сравнение оружия рисует .ui-tooltip; тема задаёт только место блока. */
 .weapon-compare {
   margin: 0 0 15px;
 }
 .item-purpose {
   padding: 12px;
-  border: 1px solid #394956;
-  background: #1b2934;
-  font-size: 11px;
-  color: #a4b2bc;
 }
 .inspector-note {
   margin-top: auto;
-  padding-top: 22px;
-  font-size: 10px;
+  padding-top: 20px;
   line-height: 1.6;
-  color: #8496a4;
 }
-.quiet,
-.help-scroll p,
-.quest-list p,
-.person-sheet p,
-.map-caption p {
-  color: #a0b0ba;
-}
+
+/* Список заданий */
 .quest-list article {
-  border-color: #384a57;
-  background: #1a2732;
-  padding: 18px;
+  border-color: var(--ui-line);
+  background: var(--ui-panel-sunken);
+  padding: 16px;
   margin-bottom: 10px;
 }
 .quest-list h3,
 .person-sheet h3,
 .help-scroll h3,
 .growth-sheet h3 {
-  color: #e5d8b8;
+  color: var(--ui-text);
 }
 .quest-list li {
-  color: #93a5b1;
+  color: var(--ui-text-muted);
 }
 .quest-list li.complete {
-  color: #b1bd98;
+  color: var(--ui-good);
 }
 .quest-number {
-  border-color: #697768;
-  color: #c8b77f;
+  border-color: var(--ui-line);
+  color: var(--ui-accent-dim);
 }
 .quest-list blockquote {
-  background: #263744;
-  border-color: #b49b64;
-  color: #dfd8c6;
+  background: var(--ui-panel-sunken);
+  border-color: var(--ui-accent-dim);
+  color: var(--ui-text-dim);
+  padding: 12px 15px;
 }
+.quest-items,
+.weapon-rack {
+  border-top-color: var(--ui-line);
+}
+.quest-items span,
+.weapon-rack small {
+  color: var(--ui-text-muted);
+}
+.weapon-rack button {
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
+}
+.weapon-rack button.equipped {
+  background: var(--ui-panel-raised);
+  border-color: var(--ui-accent);
+}
+.character-strip {
+  border-bottom-color: var(--ui-line);
+}
+.character-strip small,
+.character-strip span {
+  color: var(--ui-text-muted);
+}
+
+/* Карта и жители */
 .map-selector {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 12px;
-  color: #99abb7;
+  font-size: var(--ui-size-label);
+  color: var(--ui-text-muted);
   margin-bottom: 12px;
 }
 .map-selector select {
-  background: #233440;
-  border: 1px solid #64726e;
-  color: #f0e2bf;
-  padding: 10px;
+  padding: 9px;
   min-width: 220px;
   max-width: 60%;
 }
@@ -566,48 +385,84 @@
 }
 .map-routes button,
 .people-tabs button {
-  border: 1px solid #40545f;
   padding: 7px 10px;
-  color: #b9c5c8;
-  font-size: 12px;
+  font-size: var(--ui-size-label);
 }
 .paper-map {
   max-height: 340px;
   margin: auto;
-  border-color: #7a826e;
+  border: 2px solid var(--ui-line-strong);
+  box-shadow: none;
 }
 .paper-map.square-map {
   aspect-ratio: 1;
   width: min(100%, 340px);
 }
-.map-caption {
-  border-color: #344a57;
-  color: #d5c6a0;
+.map-pin {
+  background: var(--ui-veil);
+  border-color: var(--ui-line-strong);
+  color: var(--ui-accent);
+  border-radius: var(--ui-radius);
 }
-.people-tabs button.selected {
-  background: #3b4d59;
-  color: #ebddb8;
+.map-pin.selected {
+  background: var(--ui-accent);
+  color: var(--ui-bg);
+}
+.map-player {
+  color: var(--ui-text);
+}
+.map-caption {
+  border-color: var(--ui-line);
+  color: var(--ui-text-dim);
 }
 .person-sheet {
-  background: #1a2936;
-  border: 1px solid #405460;
-  padding: 22px;
+  background: var(--ui-panel-sunken);
+  border: 1px solid var(--ui-line);
+  padding: 20px;
+}
+.person-sheet > .face-crop {
+  background: var(--ui-panel-sunken);
+  border: 1px solid var(--ui-line-strong);
+  box-shadow: none;
+}
+.person-sheet small,
+.person-location {
+  color: var(--ui-text-muted);
+}
+.person-location {
+  border-bottom-color: var(--ui-line);
+}
+.trust-hearts {
+  color: var(--ui-hp);
 }
 .citizen-status {
-  color: #d0af7d !important;
-  font-size: 12px;
+  color: var(--ui-accent) !important;
+  font-size: var(--ui-size-label);
 }
+
+/* Справка и управление */
 .control-list > div {
-  border-color: #314754;
+  border-color: var(--ui-line);
 }
 .control-list kbd {
-  color: #d9c58f;
+  color: var(--ui-accent);
 }
 .control-list span {
-  color: #afbbc2;
+  color: var(--ui-text-dim);
 }
+.reset-confirm,
+.reset-confirm button {
+  border-color: var(--ui-danger-dim);
+  border-radius: var(--ui-radius);
+}
+.reset-confirm button:hover {
+  border-color: var(--ui-danger);
+  color: var(--ui-danger-text);
+}
+
+/* Развитие: старая сетка перков */
 .growth-sheet > p {
-  color: #b8c3c8;
+  color: var(--ui-text-dim);
   font-size: 14px;
 }
 .perk-grid {
@@ -619,68 +474,111 @@
   display: flex;
   gap: 15px;
   align-items: flex-start;
-  border: 1px solid #55696e;
-  background: #203441;
-  padding: 20px;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-panel-sunken);
+  padding: 18px;
   text-align: left;
 }
 .perk-grid > button > svg {
-  color: #c8b77b;
+  color: var(--ui-accent-dim);
   flex-shrink: 0;
 }
 .perk-grid h3 {
-  font-size: 20px;
+  font-size: 19px;
   margin: 0 0 8px;
 }
 .perk-grid p {
   margin: 0 0 12px;
-  font-size: 12px;
-  color: #a9bbc5;
+  font-size: var(--ui-size-label);
+  color: var(--ui-text-muted);
 }
 .perk-grid small {
-  font-size: 11px;
-  color: #bfae77;
+  font-size: var(--ui-size-micro);
+  color: var(--ui-accent-dim);
 }
 .perk-grid button.learned {
   opacity: 1;
-  border-color: #96a780;
-  background: #253d3e;
+  border-color: var(--ui-accent);
+  background: var(--ui-panel-raised);
 }
-.activity-window {
-  padding: 26px;
-  width: min(690px, calc(100vw - 40px));
-  max-height: calc(100dvh - 32px);
-  overflow: auto;
-}
+
+/* Занятия: вкладки, шкалы точности, карточки */
 .activity-window p,
 .activity-window small {
-  color: #adbbc3;
+  color: var(--ui-text-dim);
+}
+.activity-window .window-header > svg {
+  color: var(--ui-accent-dim);
+}
+.phase-tabs {
+  border-bottom-color: var(--ui-line);
+}
+.phase-tabs span {
+  color: var(--ui-text-muted);
 }
 .phase-tabs span.active {
-  color: #e3d5af;
-  border-color: #cab67a;
+  color: var(--ui-text);
+  border-bottom-color: var(--ui-accent);
 }
-.heat-readout,
-.phase-tabs span {
-  color: #c2c3b2;
+.heat-readout {
+  color: var(--ui-text-dim);
+}
+.heat-readout b {
+  color: var(--ui-danger-text);
+}
+.skill-meter {
+  background: var(--ui-bg);
+  border-color: var(--ui-line);
+  box-shadow: inset 0 0 0 1px var(--ui-line-inner);
+}
+.sweet-zone {
+  background: var(--ui-good);
+  border-color: var(--ui-accent-dim);
+  opacity: 0.55;
+}
+.skill-meter i {
+  background: var(--ui-text);
+  box-shadow: 0 0 0 1px var(--ui-bg);
 }
 .recipe-choices button,
 .dual-actions button,
 .side-card {
-  background: #22333f;
-  border-color: #4d646b;
-  color: #e2d7bd;
+  background: var(--ui-panel-sunken);
+  border-color: var(--ui-line);
+  border-radius: var(--ui-radius);
+  color: var(--ui-text-dim);
+}
+.recipe-choices small,
+.side-card > span {
+  color: var(--ui-text-faint);
 }
 .side-card.active {
-  border-color: #c3a771;
-  background: #374748;
+  border-color: var(--ui-accent);
+  background: var(--ui-panel-raised);
+  color: var(--ui-text);
+}
+.side-card.on-fire {
+  border-color: var(--ui-danger);
+  background: var(--ui-panel-raised);
+}
+.fish-score {
+  color: var(--ui-text-dim);
+}
+.stage-count {
+  color: var(--ui-accent-dim);
+}
+.timing-workspace small {
+  color: var(--ui-text-faint);
 }
 .abandon-activity {
-  color: #a89884;
+  border-top-color: var(--ui-line);
+  color: var(--ui-text-muted);
 }
 .activity-result p {
-  color: #e6d6b4;
+  color: var(--ui-text);
 }
+
+/* Головоломки */
 .puzzle-workspace {
   text-align: center;
   padding: 4px 4px 12px;
@@ -693,124 +591,93 @@
   grid-template-columns: repeat(3, 78px);
   gap: 9px;
   justify-content: center;
-  margin: 22px auto;
+  margin: 20px auto;
 }
 .puzzle-grid button {
   height: 70px;
-  border: 2px solid #50626b;
-  background: #1e2f3c;
-  color: #a9b68c;
-  font: 38px var(--serif);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
+  background: var(--ui-panel-sunken);
+  color: var(--ui-text-muted);
+  font: 36px var(--ui-font);
 }
 .puzzle-grid .specimen-1 {
-  color: #e6d39c;
+  color: var(--ui-accent);
 }
 .puzzle-grid .specimen-2 {
-  color: #879f89;
+  color: var(--ui-good);
 }
 .puzzle-grid .specimen-3 {
-  color: #95816e;
+  color: var(--ui-danger-text);
 }
 .specimen-key {
   display: flex;
   justify-content: center;
   gap: 18px;
-  color: #bac8b7;
-  font-size: 12px;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-size-label);
 }
 .circuit button.lit {
-  background: #3a4c47;
-  color: #ebcf79;
-  border-color: #c0a773;
-  box-shadow: inset 0 0 0 3px #293d3c;
+  background: var(--ui-panel-raised);
+  color: var(--ui-accent);
+  border-color: var(--ui-accent);
+  box-shadow: inset 0 0 0 2px var(--ui-line-inner);
 }
 .order-sequence {
   display: flex;
   gap: 12px;
   justify-content: center;
-  margin: 30px 0;
+  margin: 28px 0;
 }
 .order-sequence > span {
   display: grid;
   place-items: center;
   width: 62px;
   height: 75px;
-  background: #253844;
-  border: 1px solid #708078;
-  font-size: 27px;
+  background: var(--ui-panel-sunken);
+  border: 1px solid var(--ui-line-strong);
+  font-size: 26px;
 }
 .lock-pins {
   display: flex;
   justify-content: center;
   gap: 18px;
-  margin: 25px 0;
+  margin: 24px 0;
 }
 .lock-pins > button {
   display: flex;
   align-items: center;
   flex-direction: column;
-  border: 2px solid #6f796f;
-  background: #253743;
-  padding: 10px 23px;
-  color: #d4bd82;
+  border: 1px solid var(--ui-line-strong);
+  border-radius: var(--ui-radius);
+  background: var(--ui-panel-sunken);
+  padding: 10px 22px;
+  color: var(--ui-accent);
 }
 .lock-pins small {
-  font-size: 10px;
+  font-size: var(--ui-size-micro);
+  color: var(--ui-text-muted);
 }
 .lock-pins b {
-  font: 42px var(--serif);
+  font: 40px var(--ui-font);
   padding: 10px;
 }
 .lock-history {
   min-height: 80px;
   white-space: pre-wrap;
-  font:
-    12px/1.8 'Segoe UI',
-    sans-serif;
-  color: #a2b9c4;
+  font: var(--ui-size-label) / 1.8 var(--ui-font-ui);
+  color: var(--ui-text-muted);
 }
+
 @media (max-width: 1050px) {
-  .menu-sidebar {
-    gap: 7px;
-    padding: 9px 11px;
-  }
-  .menu-brand {
-    min-width: 105px;
-    margin-right: 0;
-  }
-  .menu-sidebar nav button {
-    font-size: 12px;
-    gap: 5px;
-    padding: 11px 7px;
-  }
-  .menu-sidebar nav button svg {
-    width: 16px;
-  }
-  .inventory-v4 {
-    grid-template-columns: 178px minmax(260px, 1fr) 201px;
-    gap: 12px;
+  .equipment-sheet {
+    padding: 12px 10px;
   }
   .item-inspector {
     padding-left: 12px;
   }
-  .menu-content {
-    padding: 15px;
-  }
-  .equipment-sheet {
-    padding: 12px 10px;
-  }
 }
 @media (max-height: 760px) and (min-width: 801px) {
-  .menu-shell {
-    height: calc(100dvh - 48px);
-  }
-  .menu-sidebar {
-    height: 65px;
-  }
-  .menu-content > .window-header {
-    margin-bottom: 11px;
-    padding-bottom: 9px;
-  }
   .inventory-v4 {
     min-height: 0;
   }
@@ -853,48 +720,7 @@
   }
 }
 @media (max-width: 800px) {
-  .rpg-menu {
-    width: calc(100vw - 20px);
-    max-height: calc(100dvh - 25px);
-  }
-  .menu-shell {
-    height: calc(100dvh - 32px);
-  }
-  .menu-sidebar {
-    height: auto;
-    min-height: 96px;
-    flex-wrap: wrap;
-    padding: 8px 12px;
-  }
-  .menu-brand {
-    flex: 1;
-  }
-  .menu-brand strong {
-    display: none;
-  }
-  .menu-sidebar nav {
-    width: 100%;
-    order: 3;
-    justify-content: flex-start;
-    overflow-x: auto;
-    flex: auto;
-  }
-  .menu-sidebar nav button {
-    font-size: 11px;
-    padding: 9px 7px;
-  }
-  .menu-sidebar nav button svg {
-    display: none;
-  }
-  .menu-content {
-    padding: 12px;
-  }
-  .inventory-v4 {
-    grid-template-columns: 1fr 190px;
-    gap: 13px;
-  }
   .equipment-sheet {
-    grid-column: 1/-1;
     display: flex;
     align-items: center;
     gap: 13px;
@@ -912,7 +738,6 @@
     width: 125px;
   }
   .equipped-weapon {
-    border: 0;
     margin: 0;
     padding: 0;
   }
@@ -927,21 +752,14 @@
   .item-slots {
     max-height: none;
   }
-  .item-inspector {
-    padding-left: 12px;
-  }
   .item-inspector h3 {
-    font-size: 21px;
+    font-size: 20px;
   }
   .perk-grid {
     grid-template-columns: 1fr;
   }
 }
 @media (max-width: 530px) {
-  .inventory-v4 {
-    display: flex;
-    flex-direction: column;
-  }
   .equipment-sheet {
     gap: 8px;
   }
@@ -951,10 +769,6 @@
   .item-slots {
     grid-template-columns: repeat(4, 1fr);
     max-height: 330px;
-  }
-  .item-inspector {
-    border: 1px solid #435b68;
-    padding: 13px;
   }
   .item-showcase {
     display: none;
