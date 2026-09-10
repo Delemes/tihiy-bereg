@@ -34,14 +34,16 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
+  activePlaces,
   initialState,
   migrateSave,
-  nearest,
   regionNames,
   safeRegions,
   threatened,
   type State,
 } from './rpg-model';
+import { isNpcKind, pickTarget, promptVerbs } from './rpg-interactables';
+import { unitScale } from './rpg-regions';
 import { createWorld, canWalk } from './rpg-world';
 import {
   advance,
@@ -55,14 +57,30 @@ import {
 } from './rpg-systems';
 import { scene, choose, finalScene, type Scene } from './rpg-story';
 import MessageWindow, { type DialogueHandle } from './rpg-message';
+import ContextMenu, { type ContextRow } from './rpg-context-menu';
 import Panels from './rpg-panels';
 import ActivityWindow from './rpg-activity';
+type Focus = { id: string; kind: string; name: string };
+// Цель действия выбирается одним правилом на всю игру: расстояние плюс
+// мягкий штраф за отворот. Поэтому подсказка в мире и клавиша действия
+// всегда указывают на один и тот же объект.
+const focusPlace = (st: State) =>
+  pickTarget(activePlaces(st), st, unitScale(st.region));
+// Строку «Оставить» рисует само меню, в списке действий она лишняя.
+const actionRows = (data: Scene): ContextRow[] =>
+  data.choices.filter((ch) => ch.id !== 'leave');
+// С законом можно говорить даже рядом с противником.
+const lawful = ['constable', 'notice:law'];
 export default function Page() {
   const [s, setS] = useState<State>(() => structuredClone(initialState)),
     [panel, setPanel] = useState(''),
     [speaker, setSpeaker] = useState(''),
     [node, setNode] = useState('root'),
     [reply, setReply] = useState<Scene | null>(null),
+    [context, setContext] = useState<Focus | null>(null),
+    [contextNode, setContextNode] = useState('root'),
+    [cursor, setCursor] = useState(0),
+    [touch, setTouch] = useState(false),
     [toast, setToast] = useState(
       'Вера хранит ключи. Зайдите в магазин у площади.',
     ),
@@ -78,7 +96,14 @@ export default function Page() {
     dialogue = useRef<DialogueHandle | null>(null),
     lastUI = useRef(0),
     pulling = useRef(false),
-    actions = useRef({ interact: () => {}, answer: (_index: number) => {} });
+    actions = useRef({
+      interact: () => {},
+      answer: (_index: number) => {},
+      pick: (_index: number) => {},
+      move: (_delta: number) => {},
+      confirm: () => {},
+      cancel: () => {},
+    });
   const keyOf = (action: GameAction) => keyLabel(bindings[action][0] || '');
   const commit = (n: State, force = true) => {
     current.current = n;
@@ -105,6 +130,80 @@ export default function Page() {
         'Не удалось записать сохранение: браузер запретил локальное хранилище.',
       );
     }
+  };
+  const openTalk = (id: string) => {
+    setSpeaker(id);
+    setNode('root');
+    setReply(null);
+    open('talk');
+  };
+  const closeContext = () => {
+    setContext(null);
+    setContextNode('root');
+    setCursor(0);
+    open('');
+  };
+  // Одно очевидное действие выполняется сразу: сундук открывается, вода
+  // набирается. Окно ради одной кнопки не появляется.
+  const instant = (p: Focus, id: string, fallback: string) => {
+    const result = choose(current.current, p.id, id, 'root');
+    commit(result.state);
+    save();
+    if (!result.close && result.node !== 'root') {
+      setContext(p);
+      setContextNode(result.node);
+      setCursor(0);
+      open('context');
+      if (result.text) setToast(result.text);
+      return;
+    }
+    setToast(result.text || fallback);
+  };
+  const openContext = (p: Focus) => {
+    const data = scene(current.current, p.id, 'root');
+    const rows = actionRows(data);
+    const live = rows.filter((row) => !row.disabled);
+    const only = live.length === 1 ? live[0] : null;
+    if (only && rows.length <= 2 && data.text.length <= 160) {
+      instant(p, only.id, only.label);
+      return;
+    }
+    // Делать нечего — короткая строка внизу экрана вместо окна.
+    if (!live.length && data.text.length <= 145) {
+      setToast(data.text);
+      return;
+    }
+    // Длинный текст — это чтение, а не выбор действия: остаётся окно с текстом.
+    if (data.text.length > 220) {
+      openTalk(p.id);
+      return;
+    }
+    const first = rows.findIndex((row) => !row.disabled);
+    setContext({ id: p.id, kind: p.kind, name: p.name || data.title });
+    setContextNode('root');
+    setCursor(first < 0 ? 0 : first);
+    open('context');
+  };
+  const pickContext = (id: string) => {
+    const target = context;
+    if (!target) return;
+    const result = choose(current.current, target.id, id, contextNode);
+    commit(result.state);
+    if (result.text) setToast(result.text);
+    save();
+    if (result.close || result.state.activity) {
+      closeContext();
+      return;
+    }
+    const next = actionRows(scene(result.state, target.id, result.node));
+    const step = next.findIndex((row) => !row.disabled);
+    const stay = next.length > 0 && (step >= 0 || result.node !== 'root');
+    if (!stay) {
+      closeContext();
+      return;
+    }
+    setContextNode(result.node);
+    setCursor(step < 0 ? 0 : step);
   };
   useEffect(() => {
     const f = requestAnimationFrame(() => {
@@ -137,11 +236,20 @@ export default function Page() {
     });
     return () => cancelAnimationFrame(f);
   }, [input]);
+  // Экранная подсказка нужна только пальцам: на клавиатуре её роль
+  // выполняет табличка в мире.
+  useEffect(() => {
+    const query = window.matchMedia('(pointer: coarse)');
+    const sync = () => setTouch(query.matches);
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
   useEffect(() => {
     actions.current.interact = () => {
       const st = current.current;
       if (!hydrated.current || panelRef.current || st.activity) return;
-      const p = nearest(st);
+      const p = focusPlace(st);
       if (!p) {
         setToast('Подойдите ближе к человеку, двери или предмету.');
         return;
@@ -152,7 +260,7 @@ export default function Page() {
         save();
         return;
       }
-      if (threatened(st) && !['constable', 'notice:law'].includes(p.id)) {
+      if (threatened(st) && !lawful.includes(p.id)) {
         setToast('Сначала отойдите от противников.');
         return;
       }
@@ -162,10 +270,12 @@ export default function Page() {
         save();
         return;
       }
-      setSpeaker(p.id);
-      setNode('root');
-      setReply(null);
-      open('talk');
+      // Разговор — только с людьми. Предметы и двери отвечают действием.
+      if (isNpcKind(p.kind)) {
+        openTalk(p.id);
+        return;
+      }
+      openContext({ id: p.id, kind: p.kind, name: p.name });
     };
   });
   useEffect(() => {
@@ -210,6 +320,10 @@ export default function Page() {
       if (menu === 'pause') {
         e.preventDefault();
         if (current.current.activity) return;
+        if (panelRef.current === 'context') {
+          actions.current.cancel();
+          return;
+        }
         open(panelRef.current ? '' : 'menu');
         return;
       }
@@ -224,6 +338,26 @@ export default function Page() {
           e.preventDefault();
           actions.current.answer(Number(e.code.slice(-1)) - 1);
         }
+        return;
+      }
+      // Контекстное меню — часть игры, а не окно браузера: цифры, стрелки
+      // и клавиша действия работают здесь и не проваливаются в мир.
+      if (panelRef.current === 'context') {
+        e.preventDefault();
+        if (/^Digit[1-9]$/.test(e.code)) {
+          actions.current.pick(Number(e.code.slice(-1)) - 1);
+          return;
+        }
+        if (binds.moveUp.includes(e.code)) {
+          actions.current.move(-1);
+          return;
+        }
+        if (binds.moveDown.includes(e.code)) {
+          actions.current.move(1);
+          return;
+        }
+        if (binds.interact.includes(e.code) || e.code === 'Space')
+          actions.current.confirm();
         return;
       }
       if (panelRef.current || current.current.activity) return;
@@ -338,17 +472,38 @@ export default function Page() {
     }
     save();
   };
-  const nearby = nearest(s),
+  const nearby = focusPlace(s),
     danger = threatened(s),
     q = trackedObjective(s),
     time = `${String(Math.floor(s.minutes / 60)).padStart(2, '0')}:${String(Math.floor(s.minutes % 60)).padStart(2, '0')}`;
   const talk =
     reply || (node === 'final' ? finalScene(s) : scene(s, speaker, node));
+  const contextScene = context ? scene(s, context.id, contextNode) : null;
+  const contextRows = contextScene ? actionRows(contextScene) : [];
+  const contextIndex = Math.min(cursor, Math.max(0, contextRows.length - 1));
   useEffect(() => {
     actions.current.answer = (index: number) => {
       const ch = talk.choices[index];
       if (ch && !ch.disabled) handleChoice(ch.id);
     };
+    actions.current.pick = (index: number) => {
+      const row = contextRows[index];
+      if (row && !row.disabled) pickContext(row.id);
+    };
+    actions.current.confirm = () => {
+      const row = contextRows[contextIndex];
+      if (row && !row.disabled) pickContext(row.id);
+    };
+    actions.current.move = (delta: number) => {
+      if (!contextRows.length) return;
+      let next = contextIndex;
+      for (let i = 0; i < contextRows.length; i++) {
+        next = (next + delta + contextRows.length) % contextRows.length;
+        if (!contextRows[next]?.disabled) break;
+      }
+      setCursor(next);
+    };
+    actions.current.cancel = closeContext;
   });
   const log = s.log.at(-1) || '',
     notice = toast || log;
@@ -456,23 +611,18 @@ export default function Page() {
               Следите за оружием · уходите с линии удара
             </div>
           )}
-          {nearby &&
-            (!danger || ['constable', 'notice:law'].includes(nearby.id)) && (
-              <button
-                className="interact-prompt"
-                onClick={() => actions.current.interact()}
-              >
-                <kbd>{keyOf('interact')}</kbd>
-                <span>
-                  {nearby.kind === 'npc'
-                    ? 'Поговорить · '
-                    : nearby.kind === 'door'
-                      ? 'Войти · '
-                      : ''}
-                  {nearby.name}
-                </span>
-              </button>
-            )}
+          {touch && nearby && (!danger || lawful.includes(nearby.id)) && (
+            <button
+              className="interact-prompt"
+              onClick={() => actions.current.interact()}
+            >
+              <kbd>{keyOf('interact')}</kbd>
+              <span>
+                {promptVerbs[nearby.kind] ?? 'Взаимодействовать'} ·{' '}
+                {nearby.name}
+              </span>
+            </button>
+          )}
           <div className="combat-state-strip">
             <span>
               {weapons[s.weapon].name}
@@ -621,13 +771,25 @@ export default function Page() {
           </div>
         </>
       )}
+      {panel === 'context' && context && contextScene && !s.activity && (
+        <ContextMenu
+          name={context.name}
+          description={contextScene.text}
+          rows={contextRows}
+          active={contextIndex}
+          closeLabel={keyOf('pause')}
+          onPick={pickContext}
+          onHover={setCursor}
+          onClose={closeContext}
+        />
+      )}
       {notice && !panel && !s.activity && (
         <output className="world-notice">
           {notice.length > 145 ? notice.slice(0, 142) + '…' : notice}
         </output>
       )}
       <Dialog
-        open={!!panel || !!s.activity}
+        open={(!!panel && panel !== 'context') || !!s.activity}
         onOpenChange={(value) => {
           if (!value && !current.current.activity) {
             open('');
