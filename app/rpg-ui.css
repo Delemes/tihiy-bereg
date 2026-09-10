@@ -482,6 +482,29 @@
 	background: var(--ui-scrim);
 }
 
+/*
+ * Слой игрового окна: пауза, снаряжение, занятие (§6).
+ * Раньше центровку, отступы и ширину задавала веб-модалка из набора
+ * компонентов — и обрезала окно меню до 384px. Теперь слой только
+ * затемняет мир и центрирует поверхность, а размеры задаёт сама поверхность.
+ * Щелчок по затемнению закрывает окно; рамка окна остаётся без веб-скруглений.
+ */
+.ui-layer {
+	position: fixed;
+	inset: 0;
+	z-index: 50;
+	display: grid;
+	place-items: center;
+	padding: var(--ui-gap-2);
+	background: var(--ui-scrim);
+	animation: ui-rise var(--ui-speed) ease-out;
+}
+
+.ui-layer > * {
+	min-width: 0;
+	outline: none;
+}
+
 @keyframes ui-rise {
 	from {
 		opacity: 0;
@@ -502,6 +525,7 @@
 @media (prefers-reduced-motion: reduce) {
 	.ui-context,
 	.ui-dialogue,
+	.ui-layer,
 	.ui-toast {
 		animation: none;
 	}
