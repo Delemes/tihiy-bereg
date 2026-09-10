@@ -42,6 +42,7 @@ import {
   type State,
 } from './rpg-model';
 import { isNpcKind, pickTarget, promptVerbs } from './rpg-interactables';
+import { swingReadout, targetReadout } from './rpg-combat-hud';
 import { unitScale } from './rpg-regions';
 import { createWorld, canWalk } from './rpg-world';
 import {
@@ -487,6 +488,9 @@ export default function Page() {
   };
   const nearby = focusPlace(s),
     danger = threatened(s),
+    // Шкала взмаха и табличка цели считаются из тех же таймеров, что и бой.
+    swing = swingReadout(s),
+    target = targetReadout(s),
     q = trackedObjective(s),
     time = `${String(Math.floor(s.minutes / 60)).padStart(2, '0')}:${String(Math.floor(s.minutes % 60)).padStart(2, '0')}`;
   const talk =
@@ -626,10 +630,35 @@ export default function Page() {
               {keyOf('journal')}
             </button>
           </div>
-          {danger && (
-            <div className="danger-banner">
-              <Swords size={17} />
-              Следите за оружием · уходите с линии удара
+          {/* Цель боя: кто атакует, сколько у него сил и когда он открыт. */}
+          {target && (
+            <div
+              className={
+                'target-plate' +
+                (target.state === 'windup' ? ' is-winding' : '') +
+                (target.open ? ' is-open' : '')
+              }
+            >
+              <div className="target-plate__head">
+                <strong>{target.name}</strong>
+                <span>{target.label}</span>
+              </div>
+              <div className="target-plate__bar">
+                <i style={{ width: target.ratio * 100 + '%' }} />
+              </div>
+              {target.state === 'windup' && (
+                <div className="target-plate__tell">
+                  <i style={{ width: target.telegraph * 100 + '%' }} />
+                </div>
+              )}
+              <div className="target-plate__tags">
+                <b>
+                  {target.hp}/{target.maxHp}
+                </b>
+                {target.tags.map((tag) => (
+                  <span key={tag}>{tag}</span>
+                ))}
+              </div>
             </div>
           )}
           {touch && nearby && (!danger || lawful.includes(nearby.id)) && (
@@ -644,21 +673,56 @@ export default function Page() {
               </span>
             </button>
           )}
-          <div className="combat-state-strip">
-            <span>
-              {weapons[s.weapon].name}
-              {weapons[s.weapon].ammo ? ' · ' + s[weapons[s.weapon].ammo!] : ''}
-            </span>
-            <span>
-              {stockInfo[s.throwItem].name}: {s[s.throwItem]} ·{' '}
-              {keyOf('cycle')} сменить
-            </span>
-            {s.wanted > 0 && (
-              <strong>
-                Розыск {s.wanted} · патруль{' '}
-                {s.wanted >= 3 ? 'в пути' : 'предупреждён'}
-              </strong>
-            )}
+          {/* Шкала взмаха: замах, активное окно и восстановление удара. */}
+          <div className="combat-readout">
+            <div className={'swing-gauge is-' + swing.tone}>
+              <span className="swing-gauge__label">{swing.label}</span>
+              <div className="swing-gauge__track">
+                <i
+                  className="swing-gauge__seg is-startup"
+                  style={{ flexGrow: swing.startup }}
+                />
+                <i
+                  className="swing-gauge__seg is-active"
+                  style={{ flexGrow: swing.active }}
+                />
+                <i
+                  className="swing-gauge__seg is-recovery"
+                  style={{ flexGrow: swing.recovery }}
+                />
+                {swing.progress >= 0 && (
+                  <span
+                    className="swing-gauge__cursor"
+                    style={{ left: swing.progress * 100 + '%' }}
+                  />
+                )}
+              </div>
+              <span className="swing-gauge__combo">
+                {swing.combo > 1 ? '×' + swing.combo : ''}
+              </span>
+            </div>
+            <div className="combat-chips">
+              <span className="combat-chip">
+                {weapons[s.weapon].name}
+                {weapons[s.weapon].ammo
+                  ? ' · ' + s[weapons[s.weapon].ammo!]
+                  : ''}
+              </span>
+              <span className="combat-chip">
+                {stockInfo[s.throwItem].name} {s[s.throwItem]} ·{' '}
+                {keyOf('cycle')}
+              </span>
+              {s.sneaking && <span className="combat-chip">Скрытно</span>}
+              {s.hostileMode && (
+                <span className="combat-chip">Оружие наголо</span>
+              )}
+              {s.wanted > 0 && (
+                <span className="combat-chip combat-chip--danger">
+                  Розыск {s.wanted} · патруль{' '}
+                  {s.wanted >= 3 ? 'в пути' : 'предупреждён'}
+                </span>
+              )}
+            </div>
           </div>
           <div className="action-dock">
             {(
