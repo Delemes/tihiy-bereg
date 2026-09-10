@@ -796,107 +796,6 @@
     sans-serif;
   color: #a2b9c4;
 }
-.hero-hud,
-.action-dock,
-.interact-prompt {
-  background: #17232deb;
-  border-color: #819087;
-  box-shadow:
-    0 0 0 2px #121820,
-    0 0 0 3px #56635e,
-    0 6px 20px #0005;
-}
-.hero-hud {
-  width: 290px;
-  padding: 11px;
-}
-.hero-sigil {
-  position: relative;
-  background: #1b2a36;
-  border: 1px solid #69746a;
-  color: #ddc894;
-  overflow: hidden;
-}
-.hud-hero-face {
-  display: block;
-  position: absolute;
-  inset: 0;
-  background-image: url('/hero-walk.png');
-  background-size: 280px 373px;
-  background-position: -119px -5px;
-  image-rendering: pixelated;
-}
-.hero-sigil > span {
-  z-index: 2;
-  position: absolute;
-  background: #26343c;
-  bottom: 0;
-  left: 0;
-  right: 0;
-}
-.hero-name {
-  color: #e7dcc0;
-}
-.hero-name > span {
-  color: #9faeaf;
-}
-.location-plaque {
-  text-shadow: 0 2px 5px #000;
-}
-.location-plaque strong {
-  color: #eee2c1;
-}
-.action-dock {
-  gap: 5px;
-  padding: 7px 9px;
-  bottom: 18px;
-}
-.action-dock button {
-  background: #253743;
-  border: 1px solid #4f655f;
-  color: #decfa8;
-  width: 49px;
-  height: 48px;
-}
-.action-dock button kbd {
-  font-size: 9px;
-  color: #a7b9c1;
-}
-.throw-glyph {
-  font-size: 24px;
-  line-height: 1;
-}
-.combat-state-strip {
-  position: absolute;
-  bottom: 83px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  font-size: 10px;
-  color: #c7d0cf;
-  white-space: nowrap;
-  pointer-events: none;
-}
-.combat-state-strip > span,
-.combat-state-strip > strong {
-  background: #14222de6;
-  padding: 5px 9px;
-  border: 1px solid #435b62;
-}
-.combat-state-strip > strong {
-  color: #ecaa87;
-  border-color: #b37960;
-}
-.world-notice {
-  background: #14232eec;
-  border-color: #4f6a71;
-  color: #d5dedc;
-  bottom: 105px;
-  max-width: 520px;
-  font-size: 12px;
-}
 @media (max-width: 1050px) {
   .menu-sidebar {
     gap: 7px;
@@ -1061,35 +960,6 @@
   .perk-grid {
     grid-template-columns: 1fr;
   }
-  .action-dock {
-    gap: 3px;
-    max-width: calc(100vw - 24px);
-  }
-  .action-dock button {
-    width: 38px;
-    height: 45px;
-  }
-  .combat-state-strip {
-    font-size: 9px;
-    max-width: 95vw;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
-  }
-  .world-notice {
-    bottom: 110px;
-    font-size: 10px;
-    max-width: 75vw;
-  }
-  .hero-hud {
-    width: 245px;
-  }
-  .location-plaque {
-    max-width: 220px;
-  }
-  .location-plaque strong {
-    font-size: 20px;
-  }
 }
 @media (max-width: 530px) {
   .inventory-v4 {
@@ -1124,28 +994,6 @@
   }
   .map-selector select {
     max-width: 100%;
-  }
-  .hero-hud {
-    width: 214px;
-  }
-  .hero-name {
-    font-size: 16px;
-  }
-  .combat-state-strip {
-    width: 95vw;
-  }
-  .combat-state-strip > span:first-child {
-    display: none;
-  }
-  .action-dock button {
-    width: 31px;
-    height: 42px;
-  }
-  .action-dock svg {
-    width: 17px;
-  }
-  .action-dock button kbd {
-    font-size: 8px;
   }
   .order-sequence {
     gap: 5px;
