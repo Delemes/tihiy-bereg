@@ -1,15 +1,17 @@
 /*
- * Геометрия игровых окон и поверхности, которых нет в rpg-menu.css:
- * окно занятия, головоломки, список заданий, жители, справка, перки.
+ * Игровые окна, которые не относятся к хрому меню: окно занятия, головоломки,
+ * карта, карточка жителя, справка, а также размеры рюкзака и общей шапки окна.
  *
- * Раньше файл держал собственную палитру «холодная сталь» и перекрашивал ею окно
- * меню поверх globals.css, а rpg-menu.css перекрашивал всё это в зелень: три
- * палитры на одном экране, синие ценники в зелёном рюкзаке. Теперь хром меню
- * целиком принадлежит rpg-menu.css, а здесь остались только размеры и те блоки,
- * у которых другого владельца нет. Цвета — только токены --ui-* из rpg-ui.css.
+ * Граница ответственности:
+ *   globals.css   — сброс, типографика, экран игры (без цветов интерфейса);
+ *   rpg-theme.css — этот файл: размеры и поверхности без другого владельца;
+ *   rpg-menu.css  — внешний вид окна меню;
+ *   rpg-ui.css    — токены --ui-* и HUD.
+ *
+ * Цвета здесь только токенные. Своей палитры у файла больше нет.
  */
 
-/* Окно занятия (готовка, рыбалка, верстак) */
+/* Окно занятия (готовка, рыбалка, верстак, головоломки) */
 .activity-window {
   width: min(690px, calc(100vw - 40px));
   max-height: calc(100dvh - 32px);
@@ -27,12 +29,32 @@
 .rpg-menu {
   max-height: calc(100dvh - 40px);
 }
+
+/* Общая шапка любого окна. Цвет текста задаёт rpg-menu.css. */
+.window-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 21px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--ui-line);
+}
+.window-header > .ornament {
+  margin-left: auto;
+}
 .window-title,
 .window-subtitle {
   margin: 0;
 }
 .menu-sidebar nav button {
   white-space: nowrap;
+}
+/* Раньше размер держался на !important против .person-sheet p. */
+.quiet,
+.person-sheet .quiet,
+.activity-window .quiet {
+  font-size: var(--ui-size-label);
+  line-height: 1.6;
 }
 
 /* Рюкзак: размеры и сетка. Цвет задаёт rpg-menu.css. */
@@ -307,60 +329,7 @@
   line-height: 1.6;
 }
 
-/* Список заданий */
-.quest-list article {
-  border-color: var(--ui-line);
-  background: var(--ui-panel-sunken);
-  padding: 16px;
-  margin-bottom: 10px;
-}
-.quest-list h3,
-.person-sheet h3,
-.help-scroll h3,
-.growth-sheet h3 {
-  color: var(--ui-text);
-}
-.quest-list li {
-  color: var(--ui-text-muted);
-}
-.quest-list li.complete {
-  color: var(--ui-good);
-}
-.quest-number {
-  border-color: var(--ui-line);
-  color: var(--ui-accent-dim);
-}
-.quest-list blockquote {
-  background: var(--ui-panel-sunken);
-  border-color: var(--ui-accent-dim);
-  color: var(--ui-text-dim);
-  padding: 12px 15px;
-}
-.quest-items,
-.weapon-rack {
-  border-top-color: var(--ui-line);
-}
-.quest-items span,
-.weapon-rack small {
-  color: var(--ui-text-muted);
-}
-.weapon-rack button {
-  border: 1px solid var(--ui-line);
-  border-radius: var(--ui-radius);
-}
-.weapon-rack button.equipped {
-  background: var(--ui-panel-raised);
-  border-color: var(--ui-accent);
-}
-.character-strip {
-  border-bottom-color: var(--ui-line);
-}
-.character-strip small,
-.character-strip span {
-  color: var(--ui-text-muted);
-}
-
-/* Карта и жители */
+/* Карта */
 .map-selector {
   display: flex;
   align-items: center;
@@ -377,82 +346,169 @@
 .map-selector > span {
   margin-left: auto;
 }
-.map-routes {
+.map-routes,
+.map-tabs,
+.people-tabs {
   display: flex;
-  gap: 6px;
   flex-wrap: wrap;
+  gap: 6px;
   margin-bottom: 13px;
 }
 .map-routes button,
+.map-tabs button,
 .people-tabs button {
   padding: 7px 10px;
   font-size: var(--ui-size-label);
 }
 .paper-map {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.5;
   max-height: 340px;
   margin: auto;
+  background-repeat: no-repeat;
   border: 2px solid var(--ui-line-strong);
-  box-shadow: none;
+  image-rendering: pixelated;
 }
 .paper-map.square-map {
-  aspect-ratio: 1;
   width: min(100%, 340px);
 }
 .map-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 21px;
+  height: 21px;
+  font-size: 13px;
   background: var(--ui-veil);
-  border-color: var(--ui-line-strong);
-  color: var(--ui-accent);
+  border: 1px solid var(--ui-line-strong);
   border-radius: var(--ui-radius);
+  color: var(--ui-accent);
 }
 .map-pin.selected {
   background: var(--ui-accent);
   color: var(--ui-bg);
 }
 .map-player {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 25px;
   color: var(--ui-text);
+  text-shadow: 0 0 4px #000;
+  pointer-events: none;
 }
 .map-caption {
-  border-color: var(--ui-line);
-  color: var(--ui-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 17px;
 }
+.map-caption > svg {
+  color: var(--ui-accent-dim);
+  flex-shrink: 0;
+}
+.map-caption b {
+  font: 18px var(--ui-font);
+  color: var(--ui-text);
+}
+.map-caption p {
+  font-size: var(--ui-size-micro);
+  margin: 4px 0;
+}
+
+/* Карточка жителя */
 .person-sheet {
+  display: flex;
+  gap: 25px;
+  padding: 20px;
   background: var(--ui-panel-sunken);
   border: 1px solid var(--ui-line);
-  padding: 20px;
 }
 .person-sheet > .face-crop {
-  background: var(--ui-panel-sunken);
+  width: 210px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  background: var(--ui-bg);
   border: 1px solid var(--ui-line-strong);
-  box-shadow: none;
 }
-.person-sheet small,
-.person-location {
+.person-sheet > div:last-child {
+  flex: 1;
+  min-width: 0;
+}
+.person-sheet h3,
+.help-scroll h3 {
+  color: var(--ui-text);
+}
+.person-sheet h3 {
+  font-size: 28px;
+  margin-top: 9px;
+}
+.person-sheet p {
+  font-size: 14px;
+}
+.person-sheet small {
+  font-size: var(--ui-size-label);
   color: var(--ui-text-muted);
 }
+.person-sheet .citizen-status {
+  color: var(--ui-accent);
+  font-size: var(--ui-size-label);
+}
 .person-location {
-  border-bottom-color: var(--ui-line);
+  display: inline-block;
+  font-size: var(--ui-size-label);
+  padding-bottom: 6px;
+  color: var(--ui-text-muted);
+  border-bottom: 1px solid var(--ui-line);
 }
 .trust-hearts {
+  display: flex;
+  gap: 5px;
+  margin: 22px 0 8px;
   color: var(--ui-hp);
 }
-.citizen-status {
-  color: var(--ui-accent) !important;
-  font-size: var(--ui-size-label);
+.person-sheet strong {
+  font: 18px var(--ui-font);
 }
 
 /* Справка и управление */
+.help-scroll p {
+  font-size: 14px;
+  margin-bottom: 23px;
+}
+.help-scroll h3 {
+  font-size: 22px;
+  margin-top: 25px;
+}
+.control-list {
+  display: grid;
+  gap: 1px;
+}
 .control-list > div {
-  border-color: var(--ui-line);
+  display: flex;
+  gap: 15px;
+  padding: 9px 0;
+  font-size: var(--ui-size-label);
+  border-bottom: 1px solid var(--ui-line);
 }
 .control-list kbd {
+  min-width: 155px;
+  font-weight: 600;
+  font-size: var(--ui-size-micro);
   color: var(--ui-accent);
 }
 .control-list span {
   color: var(--ui-text-dim);
 }
-.reset-confirm,
+.reset-confirm {
+  padding: 15px;
+  border: 1px solid var(--ui-danger-dim);
+  border-radius: var(--ui-radius);
+}
 .reset-confirm button {
-  border-color: var(--ui-danger-dim);
+  padding: 10px;
+  margin-right: 8px;
+  font-size: var(--ui-size-label);
+  border: 1px solid var(--ui-danger-dim);
   border-radius: var(--ui-radius);
 }
 .reset-confirm button:hover {
@@ -460,97 +516,116 @@
   color: var(--ui-danger-text);
 }
 
-/* Развитие: старая сетка перков */
-.growth-sheet > p {
-  color: var(--ui-text-dim);
-  font-size: 14px;
-}
-.perk-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 13px;
-}
-.perk-grid > button {
-  display: flex;
-  gap: 15px;
-  align-items: flex-start;
-  border: 1px solid var(--ui-line);
-  background: var(--ui-panel-sunken);
-  padding: 18px;
-  text-align: left;
-}
-.perk-grid > button > svg {
-  color: var(--ui-accent-dim);
-  flex-shrink: 0;
-}
-.perk-grid h3 {
-  font-size: 19px;
-  margin: 0 0 8px;
-}
-.perk-grid p {
-  margin: 0 0 12px;
-  font-size: var(--ui-size-label);
-  color: var(--ui-text-muted);
-}
-.perk-grid small {
-  font-size: var(--ui-size-micro);
-  color: var(--ui-accent-dim);
-}
-.perk-grid button.learned {
-  opacity: 1;
-  border-color: var(--ui-accent);
-  background: var(--ui-panel-raised);
-}
-
 /* Занятия: вкладки, шкалы точности, карточки */
 .activity-window p,
 .activity-window small {
   color: var(--ui-text-dim);
 }
+.activity-window p {
+  font-size: var(--ui-size-body);
+}
+.activity-window .window-title {
+  font-size: 25px;
+}
 .activity-window .window-header > svg {
   color: var(--ui-accent-dim);
 }
 .phase-tabs {
-  border-bottom-color: var(--ui-line);
+  display: flex;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--ui-line);
 }
 .phase-tabs span {
+  flex: 1;
+  padding: 9px 8px;
+  font: 17px var(--ui-font);
   color: var(--ui-text-muted);
 }
 .phase-tabs span.active {
   color: var(--ui-text);
-  border-bottom-color: var(--ui-accent);
+  border-bottom: 2px solid var(--ui-accent);
 }
-.heat-readout {
-  color: var(--ui-text-dim);
-}
-.heat-readout b {
-  color: var(--ui-danger-text);
-}
-.skill-meter {
-  background: var(--ui-bg);
-  border-color: var(--ui-line);
-  box-shadow: inset 0 0 0 1px var(--ui-line-inner);
-}
-.sweet-zone {
-  background: var(--ui-good);
-  border-color: var(--ui-accent-dim);
-  opacity: 0.55;
-}
-.skill-meter i {
-  background: var(--ui-text);
-  box-shadow: 0 0 0 1px var(--ui-bg);
+.recipe-choices {
+  display: flex;
+  gap: 10px;
+  margin: 23px 0;
 }
 .recipe-choices button,
 .dual-actions button,
 .side-card {
   background: var(--ui-panel-sunken);
-  border-color: var(--ui-line);
+  border: 1px solid var(--ui-line);
   border-radius: var(--ui-radius);
   color: var(--ui-text-dim);
+}
+.recipe-choices button {
+  flex: 1;
+  text-align: left;
+  padding: 18px 13px;
+  font: 18px var(--ui-font);
 }
 .recipe-choices small,
 .side-card > span {
   color: var(--ui-text-faint);
+}
+.recipe-choices small {
+  display: block;
+  font-size: var(--ui-size-micro);
+  margin-top: 9px;
+}
+.heat-readout {
+  display: flex;
+  justify-content: space-between;
+  font: 22px var(--ui-font);
+  margin-bottom: 13px;
+  color: var(--ui-text-dim);
+}
+.heat-readout b {
+  font-weight: 400;
+  color: var(--ui-danger-text);
+}
+.skill-meter {
+  position: relative;
+  height: 22px;
+  margin: 13px 0 25px;
+  background: var(--ui-bg);
+  border: 1px solid var(--ui-line);
+  box-shadow: inset 0 0 0 1px var(--ui-line-inner);
+}
+.sweet-zone {
+  position: absolute;
+  height: 100%;
+  background: var(--ui-good);
+  border-inline: 1px solid var(--ui-accent-dim);
+  opacity: 0.55;
+}
+.skill-meter i {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 4px;
+  transform: translateX(-50%);
+  background: var(--ui-text);
+  box-shadow: 0 0 0 1px var(--ui-bg);
+}
+.dual-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 23px;
+}
+.dual-actions button {
+  flex: 1;
+  padding: 11px;
+  font: 17px var(--ui-font);
+}
+.skewer-board {
+  display: flex;
+  gap: 15px;
+  margin: 23px 0;
+}
+.side-card {
+  flex: 1;
+  padding: 16px;
 }
 .side-card.active {
   border-color: var(--ui-accent);
@@ -561,21 +636,85 @@
   border-color: var(--ui-danger);
   background: var(--ui-panel-raised);
 }
-.fish-score {
-  color: var(--ui-text-dim);
+.side-card > span {
+  display: block;
+  font-size: var(--ui-size-micro);
 }
-.stage-count {
-  color: var(--ui-accent-dim);
+.side-card strong {
+  display: block;
+  font: 34px var(--ui-font);
+  margin: 9px 0;
 }
-.timing-workspace small {
-  color: var(--ui-text-faint);
+.side-card .skill-meter {
+  height: 10px;
+  margin-bottom: 4px;
 }
 .abandon-activity {
-  border-top-color: var(--ui-line);
+  display: block;
+  margin-top: 24px;
+  padding-top: 14px;
+  font-size: var(--ui-size-micro);
+  border-top: 1px solid var(--ui-line);
   color: var(--ui-text-muted);
 }
+.activity-result {
+  text-align: center;
+  padding: 20px;
+}
 .activity-result p {
+  font: 23px/1.6 var(--ui-font);
+  margin: 23px 0 30px;
   color: var(--ui-text);
+}
+.fishing-workspace > label {
+  display: flex;
+  justify-content: space-between;
+  font: 19px var(--ui-font);
+}
+.fish-score {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  margin: 24px 0 37px;
+  color: var(--ui-text-dim);
+}
+.fish-score strong {
+  font: 42px var(--ui-font);
+  color: var(--ui-text);
+}
+.fish-score span {
+  font-size: var(--ui-size-micro);
+  width: 70px;
+}
+.reel-button {
+  width: 100%;
+  user-select: none;
+  touch-action: none;
+}
+.reel-button:active {
+  background: var(--ui-panel-raised);
+}
+.timing-workspace {
+  text-align: center;
+  padding: 8px 0 15px;
+}
+.timing-workspace h3 {
+  font-size: 23px;
+}
+.timing-workspace small {
+  display: block;
+  font-size: var(--ui-size-micro);
+  margin-top: 17px;
+  color: var(--ui-text-faint);
+}
+.timing-workspace .primary-command {
+  min-width: 200px;
+}
+.stage-count {
+  font: 32px var(--ui-font);
+  margin-bottom: 18px;
+  color: var(--ui-accent-dim);
 }
 
 /* Головоломки */
@@ -676,6 +815,15 @@
   .item-inspector {
     padding-left: 12px;
   }
+  .person-sheet {
+    gap: 17px;
+  }
+  .person-sheet > .face-crop {
+    width: 170px;
+  }
+  .control-list kbd {
+    min-width: 125px;
+  }
 }
 @media (max-height: 760px) and (min-width: 801px) {
   .inventory-v4 {
@@ -720,6 +868,10 @@
   }
 }
 @media (max-width: 800px) {
+  .window-header {
+    padding-bottom: 15px;
+    margin-bottom: 16px;
+  }
   .equipment-sheet {
     display: flex;
     align-items: center;
@@ -755,8 +907,68 @@
   .item-inspector h3 {
     font-size: 20px;
   }
-  .perk-grid {
-    grid-template-columns: 1fr;
+  .person-sheet {
+    display: block;
+    padding: 15px;
+  }
+  .person-sheet > .face-crop {
+    width: 140px;
+    float: left;
+    margin: 0 16px 14px 0;
+  }
+  .person-sheet:after {
+    content: '';
+    display: block;
+    clear: both;
+  }
+  .person-sheet h3 {
+    font-size: 24px;
+  }
+  .person-sheet p {
+    font-size: var(--ui-size-label);
+  }
+  .trust-hearts {
+    clear: both;
+    padding-top: 12px;
+  }
+  .control-list > div {
+    gap: 8px;
+    font-size: var(--ui-size-micro);
+  }
+  .control-list kbd {
+    min-width: 103px;
+    font-size: 10px;
+  }
+  .activity-window {
+    padding: 18px;
+  }
+  .activity-window .window-title {
+    font-size: 22px;
+  }
+  .activity-window p {
+    font-size: var(--ui-size-label);
+  }
+  .phase-tabs span {
+    font-size: 14px;
+  }
+  .recipe-choices {
+    gap: 7px;
+  }
+  .recipe-choices button {
+    padding: 14px 10px;
+    font-size: var(--ui-size-body);
+  }
+  .heat-readout {
+    font-size: 20px;
+  }
+  .skewer-board {
+    gap: 9px;
+  }
+  .side-card {
+    padding: 12px;
+  }
+  .dual-actions button {
+    font-size: var(--ui-size-body);
   }
 }
 @media (max-width: 530px) {
