@@ -5,8 +5,9 @@
   --gold: #d7bd80;
   --serif: Georgia, 'Times New Roman', serif;
 }
-.rpg-menu[data-slot='dialog-content'],
-.activity-window[data-slot='dialog-content'] {
+/* Рамку окна держит сама поверхность, а не слот стороннего диалога. */
+.rpg-menu,
+.activity-window {
   background: #131c27;
   color: #e7e1d3;
   border: 2px solid #a08d65;
@@ -16,7 +17,7 @@
     0 20px 80px #000b;
   border-radius: 3px;
 }
-.rpg-menu[data-slot='dialog-content'] {
+.rpg-menu {
   width: min(1180px, calc(100vw - 40px));
   max-height: calc(100dvh - 40px);
 }
@@ -109,11 +110,13 @@
   margin-bottom: 16px;
   border-color: #354451;
 }
-.window-header [data-slot='dialog-title'] {
+.window-title {
+  margin: 0;
   font-size: 23px;
   color: #eee6d4;
 }
-.window-header [data-slot='dialog-description'] {
+.window-subtitle {
+  margin: 0;
   color: #8e9ca8;
   font-size: 11px;
 }
@@ -496,6 +499,25 @@
   margin-left: auto;
   color: #e2d8bd;
 }
+/* Сравнение с оружием в руках (§11): знак и цвет вместо второй таблицы. */
+.weapon-stats em {
+  font-style: normal;
+  font-size: 10px;
+  min-width: 46px;
+  text-align: right;
+  color: #8b9ca7;
+}
+.weapon-stats em.better {
+  color: #a9c08a;
+}
+.weapon-stats em.worse {
+  color: #c9927e;
+}
+.compare-note {
+  margin: 0 0 8px;
+  font-size: 10px;
+  color: #8b9ca7;
+}
 .item-purpose {
   padding: 12px;
   border: 1px solid #394956;
@@ -651,9 +673,10 @@
   border-color: #96a780;
   background: #253d3e;
 }
-.activity-window[data-slot='dialog-content'] {
+.activity-window {
   padding: 26px;
   width: min(690px, calc(100vw - 40px));
+  max-height: calc(100dvh - 32px);
   overflow: auto;
 }
 .activity-window p,
@@ -874,44 +897,6 @@
   max-width: 520px;
   font-size: 12px;
 }
-.dialogue-paper {
-  background: #162633f7;
-  border: 2px solid #9b9478;
-  box-shadow:
-    0 0 0 2px #0c1620,
-    0 0 0 4px #52676a;
-}
-.answer-window {
-  background: #1b2b38fa;
-  border-color: #a7a080;
-  box-shadow:
-    0 0 0 2px #101d29,
-    0 0 0 4px #52656a,
-    0 6px 20px #0008;
-}
-.answer-window.command-menu {
-  width: min(440px, calc(100vw - 80px));
-}
-.answer-window button:hover:not(:disabled),
-.answer-window button:focus-visible {
-  background: #394c58;
-  border-color: #758681;
-}
-.answer-window button small {
-  color: #9cafb9;
-}
-.speaker-line [data-slot='dialog-description'] {
-  color: #9cbbc4;
-}
-.portrait-wing .face-crop {
-  background: linear-gradient(transparent, #273f4a99);
-}
-.speaker-monogram {
-  background: #21333f;
-  border-color: #839a98;
-  color: #c4ba98;
-  font-size: 67px;
-}
 @media (max-width: 1050px) {
   .menu-sidebar {
     gap: 7px;
@@ -993,7 +978,7 @@
   }
 }
 @media (max-width: 800px) {
-  .rpg-menu[data-slot='dialog-content'] {
+  .rpg-menu {
     width: calc(100vw - 20px);
     max-height: calc(100dvh - 25px);
   }
@@ -1174,9 +1159,4 @@
 .face-crop.extra-face img {
   width: 600% !important;
   height: 300% !important;
-}
-.portrait-wing .extra-face {
-  border-left: 1px solid #5d7279;
-  background: #151b25;
-  mask-image: none;
 }
