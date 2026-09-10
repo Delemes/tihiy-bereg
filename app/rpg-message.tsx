@@ -1,12 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import type { Scene } from './rpg-story';
 
 /**
- * Окно разговора не вешает свой обработчик клавиатуры: весь ввод идёт
- * через единый слой ввода страницы, а она управляет окном через эту ручку.
+ * Окно разговора — часть игры, а не модальное окно браузера (§7):
+ * портрет, имя, реплика, индикатор продолжения и ответы одной колонкой.
+ * Клавиатуру окно не слушает: весь ввод идёт через единый слой ввода
+ * страницы, а она управляет окном через эту ручку.
  */
 export type DialogueHandle = { skip: () => void; done: boolean };
 
@@ -82,58 +83,52 @@ export default function MessageWindow({
     };
   }, [handle, data.text.length, done]);
   return (
-    <>
-      <div className="portrait-wing">
+    <section
+      className={'ui-panel ui-dialogue' + (done ? '' : ' ui-dialogue--typing')}
+      aria-label={'Разговор: ' + data.title}
+      onClick={done ? undefined : () => setLetters(data.text.length)}
+    >
+      <div className="ui-dialogue__portrait">
         {data.portrait !== undefined ? (
           <AnimeFace person={data.portrait} emotion={data.emotion || 0} />
         ) : (
-          <div className="speaker-monogram">{data.title[0]}</div>
+          <span className="ui-dialogue__letter">{data.title[0]}</span>
         )}
       </div>
-      <div className="dialogue-paper">
-        <div className="speaker-line">
-          <DialogTitle>{data.title}</DialogTitle>
-          <DialogDescription>{data.role}</DialogDescription>
-          <span>◆</span>
+      <div className="ui-dialogue__body">
+        <div className="ui-dialogue__name">
+          {data.title}
+          {data.role && <span className="ui-dialogue__role">{data.role}</span>}
         </div>
-        <p className="spoken-text">
+        <p className="ui-dialogue__text">
           {data.text.slice(0, letters)}
-          {!done && <span className="type-caret">▌</span>}
+          {!done && <span className="ui-dialogue__caret">▐</span>}
         </p>
-        {!done ? (
-          <button
-            className="skip-line"
-            onClick={() => setLetters(data.text.length)}
-          >
-            Показать реплику <kbd>Enter</kbd>
-          </button>
-        ) : (
-          <span className="dialogue-prompt">
-            {data.menu ? 'Выберите тему' : 'Ваш ответ'} <span>↓</span>
-          </span>
+        {done && data.choices.length > 0 && (
+          <ul className="ui-choices" aria-label="Варианты разговора">
+            {data.choices.map((ch, i) => (
+              <li key={ch.id}>
+                <button
+                  className="ui-btn"
+                  disabled={ch.disabled}
+                  onClick={() => choose(ch.id)}
+                >
+                  <span>
+                    {ch.label}
+                    {ch.hint && (
+                      <span className="ui-choices__hint"> · {ch.hint}</span>
+                    )}
+                  </span>
+                  <kbd className="ui-btn__key">{i < 9 ? i + 1 : ''}</kbd>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {done && !data.choices.length && (
+          <span className="ui-dialogue__more">▼</span>
         )}
       </div>
-      {done && (
-        <div
-          className={'answer-window ' + (data.menu ? 'command-menu' : '')}
-          aria-label="Варианты разговора"
-        >
-          {data.choices.map((ch, i) => (
-            <button
-              key={ch.id}
-              onClick={() => choose(ch.id)}
-              disabled={ch.disabled}
-            >
-              <span className="selection-arrow">▸</span>
-              <span>
-                {ch.label}
-                {ch.hint && <small>{ch.hint}</small>}
-              </span>
-              <kbd>{i < 9 ? i + 1 : ''}</kbd>
-            </button>
-          ))}
-        </div>
-      )}
-    </>
+    </section>
   );
 }
