@@ -390,12 +390,58 @@
 	pointer-events: none;
 }
 
+/*
+ * Второй режим тултипа: встроенный в инспектор снаряжения, а не всплывающий
+ * над слотом. Сравнение оружия говорит теми же токенами, что и остальной
+ * интерфейс, и не заводит собственную таблицу стилей.
+ */
+.ui-tooltip--inline {
+	position: static;
+	z-index: auto;
+	max-width: none;
+	pointer-events: auto;
+}
+
 .ui-tooltip__stats {
 	display: grid;
 	grid-template-columns: 1fr auto;
 	gap: 0 var(--ui-gap-2);
 	margin-top: var(--ui-gap-1);
 	color: var(--ui-text-muted);
+}
+
+.ui-tooltip__stats dt,
+.ui-tooltip__stats dd {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-gap-1);
+	margin: 0;
+	padding: 2px 0;
+	min-width: 0;
+	font-size: var(--ui-size-micro);
+}
+
+.ui-tooltip__stats dt {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.ui-tooltip__stats dd {
+	justify-content: flex-end;
+	color: var(--ui-text);
+	white-space: nowrap;
+}
+
+.ui-tooltip__stats b {
+	font-weight: 400;
+}
+
+.ui-tooltip__delta {
+	min-width: 46px;
+	font-style: normal;
+	text-align: right;
+	color: var(--ui-text-faint);
 }
 
 .ui-tooltip__delta--up {
