@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+/*
+ * Базовый слой: сброс, типографика, старые окна меню и занятий.
+ *
+ * HUD здесь больше нет: шапка, панель действий, подсказки и уведомления
+ * целиком живут в app/rpg-ui.css на токенах дизайн-системы — иначе одну
+ * и ту же плашку красили три файла подряд.
+ * Вместе с веб-модалкой (§5-6) убраны все правила по data-slot и старый
+ * скин окна диалога (бумага, крыло портрета, отдельное окно ответов).
+ */
 :root {
   --background: #171d1b;
   --foreground: #eee5cf;
@@ -84,326 +93,8 @@ h4 {
   touch-action: none;
   outline: 0;
 }
-.hud-top {
-  position: absolute;
-  top: 22px;
-  left: 24px;
-  right: 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  pointer-events: none;
-  gap: 14px;
-}
-.hud-top button {
-  pointer-events: auto;
-}
-.hero-hud {
-  width: 302px;
-  padding: 12px 14px 10px 11px;
-  background: #15211eee;
-  border: 1px solid #8e805e;
-  box-shadow:
-    0 0 0 3px #17201dda,
-    0 5px 14px #08151277;
-  display: flex;
-  gap: 13px;
-}
-.hero-sigil {
-  position: relative;
-  width: 45px;
-  height: 60px;
-  border: 1px solid #746d53;
-  display: grid;
-  place-items: center;
-  font-family: var(--serif);
-  font-size: 31px;
-  color: #d3c298;
-  background: linear-gradient(135deg, #485042, #182421);
-  margin-top: 8px;
-}
-.hero-sigil span {
-  position: absolute;
-  bottom: -11px;
-  font: 13px Georgia;
-  background: #1e2924;
-  border: 1px solid #9f8f67;
-  width: 27px;
-  text-align: center;
-  padding: 3px;
-}
-.hero-vitals {
-  flex: 1;
-}
-.hero-name {
-  font: 18px var(--serif);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-.hero-name > span {
-  font: 11px 'Segoe UI';
-  color: #b8b29d;
-}
-.vital-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 4px 0;
-}
-.vital-row > small {
-  font-size: 10px;
-  color: #b4b6a0;
-  width: 24px;
-  letter-spacing: 0.3px;
-}
-.vital-row > b {
-  font-size: 11px;
-  min-width: 24px;
-  text-align: right;
-  font-weight: 400;
-}
-.vital-track {
-  height: 7px;
-  background: #121b16;
-  border: 1px solid #6e715e;
-  flex: 1;
-  overflow: hidden;
-}
-.vital-track i {
-  display: block;
-  height: 100%;
-  transition: width 0.12s linear;
-}
-.health i {
-  background: linear-gradient(#b86b52, #843d32);
-}
-.stamina i {
-  background: linear-gradient(#a7b48b, #6c8155);
-}
-.vital-extras {
-  display: flex;
-  gap: 13px;
-  margin-top: 8px;
-  font-size: 11px;
-  color: #d6c9a9;
-}
-.vital-extras span {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.danger-text {
-  color: #f2a087 !important;
-}
-.location-plaque {
-  padding: 6px 32px 2px;
-  text-align: center;
-  text-shadow: 0 2px 4px #000;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    #15231dbc 18%,
-    #15231dbc 82%,
-    transparent
-  );
-  min-width: 240px;
-}
-.location-plaque small {
-  font-size: 10px;
-  letter-spacing: 3px;
-  color: #d3c7a5;
-  display: block;
-}
-.location-plaque strong {
-  font: 25px var(--serif);
-  display: block;
-  margin-top: 5px;
-}
-.location-plaque > span {
-  font-size: 12px;
-  letter-spacing: 9px;
-  color: #d4bc8b;
-}
-.time-hud {
-  min-width: 188px;
-  text-align: right;
-  text-shadow: 0 1px 3px #000;
-}
-.time-hud > div:first-child {
-  display: flex;
-  gap: 9px;
-  align-items: center;
-  justify-content: flex-end;
-  font-size: 13px;
-}
-.time-hud b {
-  margin-left: 10px;
-  font-weight: 500;
-}
-.top-controls {
-  display: flex;
-  gap: 7px;
-  justify-content: flex-end;
-  margin-top: 12px;
-}
-.top-controls button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #1b2720de;
-  border: 1px solid #85795e;
-  padding: 9px 11px;
-}
-.objective-note {
-  position: absolute;
-  left: 28px;
-  bottom: 89px;
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 11px 14px;
-  background: linear-gradient(90deg, #15251feb, #15251f88);
-  border-left: 2px solid #bfaa76;
-  max-width: 310px;
-  box-shadow: 0 3px 10px #0d211533;
-}
-.objective-note > svg {
-  margin-top: 3px;
-  color: #bca875;
-}
-.objective-note strong {
-  display: block;
-  font: 16px var(--serif);
-  margin-bottom: 5px;
-}
-.objective-note span {
-  font-size: 12px;
-  color: #c3c6ad;
-  display: block;
-}
-.objective-note button {
-  font-size: 12px;
-  color: #c8b389;
-  padding: 3px 6px;
-  border: 1px solid #8f86644d;
-  margin-left: 8px;
-}
-.interact-prompt {
-  position: absolute;
-  bottom: 94px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 17px 8px 8px;
-  background: #182720ed;
-  border: 1px solid #c6b080;
-  box-shadow: 0 0 0 3px #23342c99;
-  font: 16px var(--serif);
-  white-space: nowrap;
-}
-.interact-prompt kbd {
-  display: grid;
-  place-items: center;
-  width: 29px;
-  height: 29px;
-  background: #dfd0af;
-  color: #283128;
-  border: 1px solid #f4e9d2;
-  font-size: 16px;
-}
-.action-dock {
-  position: absolute;
-  bottom: 22px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  padding: 6px;
-  gap: 5px;
-  background: #17201de8;
-  border: 1px solid #a18e65;
-  box-shadow:
-    0 0 0 3px #17201d9c,
-    0 7px 18px #0006;
-}
-.action-dock button {
-  width: 47px;
-  height: 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  background: linear-gradient(#364238, #232d25);
-  border: 1px solid #657057;
-  color: #e4d5ae;
-}
-.action-dock kbd {
-  font-size: 10px;
-  color: #babfa8;
-  line-height: 1;
-}
-.dock-divider {
-  width: 1px;
-  background: #988661;
-  margin: 2px 4px;
-}
-.world-notice {
-  position: absolute;
-  bottom: 23px;
-  left: 27px;
-  max-width: calc(50% - 265px);
-  font-size: 12px;
-  line-height: 1.5;
-  color: #e1dbc5;
-  text-shadow: 0 1px 3px #000;
-  padding: 7px 10px;
-  background: #15231ac9;
-  border-left: 1px solid #a48f5e;
-  pointer-events: none;
-}
-.danger-banner {
-  position: absolute;
-  top: 150px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  background: #51261edb;
-  border: 1px solid #b67450;
-  padding: 7px 15px;
-  font-size: 13px;
-  color: #f3d3aa;
-}
-.touch-move {
-  display: none;
-}
-[data-slot='dialog-overlay'] {
-  background: #090e104a !important;
-  backdrop-filter: none !important;
-}
-[data-slot='dialog-content'] {
-  font-size: 16px;
-}
-.rpg-menu[data-slot='dialog-content'],
-.activity-window[data-slot='dialog-content'] {
-  width: min(1000px, calc(100vw - 64px));
-  max-width: none;
-  max-height: calc(100dvh - 70px);
-  border: 1px solid #c5af7c;
-  border-radius: 2px;
-  padding: 0;
-  gap: 0;
-  background: var(--paper);
-  color: #302d25;
-  box-shadow:
-    0 0 0 4px #1d2823,
-    0 0 0 5px #6f674c,
-    0 25px 100px #0009;
+/* Окно меню обрезает содержимое по своей рамке. */
+.rpg-menu {
   overflow: hidden;
 }
 .menu-shell {
@@ -503,15 +194,6 @@ h4 {
   padding-bottom: 21px;
   border-bottom: 1px solid var(--line);
   margin-bottom: 22px;
-}
-.window-header [data-slot='dialog-title'] {
-  font: 30px var(--serif);
-  color: #383b2e;
-}
-.window-header [data-slot='dialog-description'] {
-  font-size: 12px;
-  color: #716b59;
-  margin-top: 6px;
 }
 .window-header > .ornament {
   margin-left: auto;
@@ -837,73 +519,7 @@ h4 {
   margin-right: 8px;
   font-size: 13px;
 }
-.message-window[data-slot='dialog-content'] {
-  position: fixed;
-  top: auto;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100vw - 76px);
-  max-width: 1250px;
-  min-height: 218px;
-  display: block;
-  padding: 0 0 0 212px;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  color: var(--paper);
-  box-shadow: none;
-  overflow: visible;
-  animation: none !important;
-}
-.dialogue-paper {
-  position: relative;
-  min-height: 218px;
-  padding: 22px 28px 24px 31px;
-  border: 1px solid #c2a775;
-  box-shadow:
-    0 0 0 3px #18251e,
-    0 0 0 4px #84795a,
-    0 14px 40px #0007;
-  background: linear-gradient(110deg, #283b30fa, #192920fc);
-  z-index: 1;
-}
-.speaker-line {
-  display: flex;
-  align-items: baseline;
-  gap: 17px;
-  border-bottom: 1px solid #8d926544;
-  padding-bottom: 12px;
-}
-.speaker-line [data-slot='dialog-title'] {
-  font: 26px var(--serif);
-  color: #f5e7c5;
-}
-.speaker-line [data-slot='dialog-description'] {
-  font-size: 12px;
-  color: #b9bba0;
-}
-.speaker-line > span {
-  color: #bca677;
-  font-size: 12px;
-  margin-left: auto;
-}
-.spoken-text {
-  font: 19px/1.6 var(--serif);
-  margin: 18px 0 24px;
-  color: #e9e3ce;
-  min-height: 65px;
-}
-.portrait-wing {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 232px;
-  height: 258px;
-  z-index: 2;
-  border-bottom: 1px solid #b7a06d;
-  pointer-events: none;
-}
+/* Вырезка лица из атласа: карточки жителей, дневник и портрет в диалоге. */
 .face-crop {
   position: relative;
   aspect-ratio: 1;
@@ -917,120 +533,14 @@ h4 {
   max-width: none !important;
   object-fit: fill;
 }
-.portrait-wing .face-crop {
-  height: 100%;
-  aspect-ratio: auto;
-  width: 100%;
-  background: linear-gradient(transparent 5%, #243b2caa 100%);
-  mask-image: linear-gradient(90deg, #000 92%, transparent);
-}
-.speaker-monogram {
-  border: 4px double #c0a879;
-  background: #273b2ef5;
-  width: 155px;
-  height: 180px;
-  position: absolute;
-  bottom: 0;
-  left: 20px;
-  display: grid;
-  place-items: center;
-  font: 100px var(--serif);
-  color: #b3aa84;
-}
-.skip-line,
-.dialogue-prompt {
-  position: absolute;
-  right: 25px;
-  bottom: 15px;
-  font-size: 11px;
-  color: #b8bb9d;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.skip-line kbd {
-  font-size: 11px;
-}
-.dialogue-prompt > span {
-  color: #d1b279;
-}
-.type-caret {
-  font-size: 16px;
-  color: #d6bd86;
-}
-.answer-window {
-  position: absolute;
-  bottom: calc(100% + 19px);
-  right: 0;
-  min-width: 320px;
-  width: min(580px, calc(100vw - 84px));
-  max-height: calc(100dvh - 310px);
-  overflow-y: auto;
-  background: #25372ef7;
-  border: 1px solid #c0a571;
-  box-shadow:
-    0 0 0 3px #16241e,
-    0 0 0 4px #847658,
-    0 8px 30px #0005;
-  padding: 9px;
-}
-.answer-window button {
-  display: flex;
-  gap: 10px;
-  width: 100%;
-  text-align: left;
-  align-items: center;
-  padding: 10px 11px;
-  border: 1px solid transparent;
-  font: 17px/1.3 var(--serif);
-}
-.answer-window button:hover:not(:disabled),
-.answer-window button:focus-visible {
-  background: linear-gradient(90deg, #9c906548, #8f845922);
-  border-color: #a494674f;
-}
-.answer-window button small {
-  display: block;
-  font: 11px/1.4 'Segoe UI';
-  color: #b7b79a;
-  margin-top: 5px;
-}
-.answer-window button > span:nth-child(2) {
-  flex: 1;
-}
-.answer-window button kbd {
-  color: #979d82;
-  align-self: center;
-  font-size: 11px;
-}
-.selection-arrow {
-  color: #c6ac75;
-  opacity: 0.45;
-}
-.answer-window button:hover .selection-arrow {
-  opacity: 1;
-}
-.answer-window.command-menu {
-  width: 325px;
-  min-width: 280px;
-}
-.command-menu button {
-  font-size: 18px;
-}
-.activity-window[data-slot='dialog-content'] {
-  width: min(680px, calc(100vw - 50px));
-  padding: 30px;
-  overflow-y: auto;
-}
 .activity-window .window-header > svg {
   color: #6b7b55;
 }
-.activity-window .window-header [data-slot='dialog-title'] {
-  font-size: 29px;
+.activity-window .window-title {
+  font-size: 26px;
 }
 .activity-window p {
   font-size: 15px;
-  color: #69604d;
 }
 .phase-tabs {
   display: flex;
@@ -1208,43 +718,7 @@ h4 {
 .timing-workspace h3 {
   font-size: 24px;
 }
-@media (min-width: 1500px) {
-  .hero-hud {
-    width: 330px;
-  }
-  .action-dock button {
-    width: 52px;
-    height: 53px;
-  }
-  .message-window[data-slot='dialog-content'] {
-    bottom: 42px;
-  }
-  .spoken-text {
-    font-size: 21px;
-  }
-}
 @media (max-width: 1000px) {
-  .location-plaque {
-    min-width: 180px;
-    padding: 7px 12px;
-  }
-  .location-plaque strong {
-    font-size: 22px;
-  }
-  .hero-hud {
-    width: 270px;
-  }
-  .time-hud {
-    min-width: 145px;
-  }
-  .objective-note {
-    max-width: 250px;
-    bottom: 110px;
-  }
-  .world-notice {
-    max-width: 240px;
-    bottom: 165px;
-  }
   .menu-sidebar {
     width: 190px;
     padding: 22px 10px;
@@ -1261,153 +735,14 @@ h4 {
   .person-sheet > .face-crop {
     width: 170px;
   }
-  .message-window[data-slot='dialog-content'] {
-    padding-left: 166px;
-    width: calc(100vw - 50px);
-  }
-  .portrait-wing {
-    width: 187px;
-    height: 224px;
-  }
-  .spoken-text {
-    font-size: 18px;
-  }
-  .dialogue-paper {
-    padding: 18px 20px 25px 25px;
-  }
-  .answer-window {
-    max-height: calc(100dvh - 295px);
-  }
-  .speaker-line {
-    gap: 10px;
-  }
-  .speaker-line [data-slot='dialog-description'] {
-    font-size: 11px;
-  }
   .inventory-split {
     gap: 18px;
   }
   .control-list kbd {
     min-width: 125px;
   }
-  .danger-banner {
-    top: 143px;
-    font-size: 12px;
-  }
 }
 @media (max-width: 700px) {
-  .hud-top {
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    gap: 6px;
-  }
-  .hero-hud {
-    width: 224px;
-    padding: 8px;
-    gap: 9px;
-  }
-  .hero-sigil {
-    display: none;
-  }
-  .hero-name {
-    font-size: 17px;
-  }
-  .hero-name > span {
-    font-size: 10px;
-  }
-  .vital-extras {
-    gap: 10px;
-  }
-  .location-plaque {
-    position: absolute;
-    top: 105px;
-    left: 50%;
-    transform: translateX(-50%);
-    min-width: 200px;
-    padding: 5px 10px;
-  }
-  .location-plaque small {
-    display: none;
-  }
-  .location-plaque strong {
-    font-size: 21px;
-  }
-  .location-plaque > span {
-    font-size: 9px;
-  }
-  .time-hud {
-    min-width: 100px;
-  }
-  .time-hud > div:first-child {
-    font-size: 11px;
-    gap: 4px;
-  }
-  .time-hud b {
-    margin-left: 4px;
-  }
-  .top-controls {
-    margin-top: 9px;
-    gap: 5px;
-  }
-  .top-controls button {
-    padding: 7px;
-  }
-  .top-controls kbd {
-    display: none;
-  }
-  .objective-note {
-    left: 14px;
-    bottom: 133px;
-    max-width: 240px;
-    padding: 8px 11px;
-  }
-  .objective-note span {
-    font-size: 11px;
-  }
-  .objective-note strong {
-    font-size: 14px;
-  }
-  .action-dock {
-    bottom: 13px;
-    gap: 3px;
-    padding: 4px;
-  }
-  .action-dock button {
-    width: 36px;
-    height: 43px;
-  }
-  .action-dock button svg {
-    width: 18px;
-    height: 18px;
-  }
-  .action-dock kbd {
-    font-size: 9px;
-  }
-  .dock-divider {
-    margin: 2px;
-  }
-  .interact-prompt {
-    bottom: 76px;
-    max-width: calc(100vw - 35px);
-    font-size: 14px;
-  }
-  .world-notice {
-    bottom: 195px;
-    left: 14px;
-    max-width: 250px;
-    font-size: 11px;
-  }
-  .danger-banner {
-    top: 162px;
-    width: calc(100vw - 40px);
-    font-size: 11px;
-    justify-content: center;
-  }
-  .rpg-menu[data-slot='dialog-content'] {
-    width: calc(100vw - 24px);
-    max-height: calc(100dvh - 30px);
-  }
   .menu-shell {
     height: calc(100dvh - 36px);
     min-height: 420px;
@@ -1465,12 +800,6 @@ h4 {
   .window-header {
     padding-bottom: 15px;
     margin-bottom: 16px;
-  }
-  .window-header [data-slot='dialog-title'] {
-    font-size: 27px;
-  }
-  .window-header [data-slot='dialog-description'] {
-    font-size: 11px;
   }
   .character-strip {
     gap: 12px;
@@ -1545,85 +874,8 @@ h4 {
     min-width: 103px;
     font-size: 10px;
   }
-  .message-window[data-slot='dialog-content'] {
-    width: calc(100vw - 26px);
-    bottom: 14px;
-    padding-left: 0;
-    min-height: 190px;
-  }
-  .portrait-wing {
-    width: 100px;
-    height: 111px;
-    bottom: auto;
-    top: -12px;
-    left: 8px;
-    z-index: 3;
-  }
-  .portrait-wing .face-crop {
-    mask-image: none;
-    border: 1px solid #c9b886;
-    background: #344832;
-  }
-  .speaker-monogram {
-    width: 87px;
-    height: 100px;
-    left: 0;
-    font-size: 52px;
-  }
-  .dialogue-paper {
-    min-height: 218px;
-    padding: 15px 16px 28px;
-  }
-  .speaker-line {
-    margin-left: 103px;
-    min-height: 75px;
-    display: block;
-    padding-bottom: 8px;
-  }
-  .speaker-line [data-slot='dialog-title'] {
+  .activity-window .window-title {
     font-size: 23px;
-  }
-  .speaker-line [data-slot='dialog-description'] {
-    font-size: 11px;
-    margin-top: 5px;
-  }
-  .speaker-line > span {
-    display: none;
-  }
-  .spoken-text {
-    font: 17px/1.45 var(--serif);
-    margin: 15px 0 22px;
-    min-height: 55px;
-    max-height: 31dvh;
-    overflow: auto;
-  }
-  .answer-window,
-  .answer-window.command-menu {
-    bottom: calc(100% + 13px);
-    width: 100%;
-    min-width: 0;
-    max-height: calc(100dvh - 305px);
-    padding: 5px;
-  }
-  .answer-window button {
-    font-size: 15px;
-    padding: 8px;
-  }
-  .answer-window button small {
-    font-size: 10px;
-  }
-  .dialogue-prompt,
-  .skip-line {
-    font-size: 10px;
-    bottom: 11px;
-  }
-  .activity-window[data-slot='dialog-content'] {
-    width: calc(100vw - 26px);
-    max-height: calc(100dvh - 35px);
-    padding: 22px;
-  }
-  .activity-window .window-header [data-slot='dialog-title'] {
-    font-size: 25px;
   }
   .activity-window p {
     font-size: 13px;
@@ -1660,42 +912,6 @@ h4 {
     font-size: 11px;
   }
 }
-@media (pointer: coarse) {
-  .touch-move {
-    display: grid;
-    grid-template-columns: repeat(3, 38px);
-    grid-template-rows: repeat(2, 38px);
-    position: absolute;
-    right: 15px;
-    bottom: 91px;
-    gap: 3px;
-    opacity: 0.8;
-  }
-  .touch-move button {
-    background: #1e3026dd;
-    border: 1px solid #b6a176;
-    font-size: 20px;
-    touch-action: none;
-  }
-  .touch-move button:first-child {
-    grid-column: 2;
-  }
-  .touch-move button:nth-child(2) {
-    grid-column: 1;
-    grid-row: 2;
-  }
-  .touch-move button:nth-child(3) {
-    grid-column: 2;
-    grid-row: 2;
-  }
-  .touch-move button:nth-child(4) {
-    grid-column: 3;
-    grid-row: 2;
-  }
-  .objective-note {
-    max-width: 205px;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   *,
   *:before,
@@ -1703,35 +919,5 @@ h4 {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
-  }
-}
-/* The popup primitive uses CSS translate; dialogue panels anchor to the bottom. */
-.message-window[data-slot='dialog-content'] {
-  translate: none;
-  transform: translateX(-50%);
-}
-@media (max-height: 590px) {
-  .message-window[data-slot='dialog-content'] {
-    bottom: 13px;
-  }
-  .dialogue-paper {
-    min-height: 180px;
-  }
-  .spoken-text {
-    margin: 12px 0 21px;
-    font-size: 16px;
-    line-height: 1.45;
-  }
-  .answer-window {
-    max-height: calc(100dvh - 245px);
-  }
-  .portrait-wing {
-    height: 215px;
-  }
-  .hud-top {
-    top: 12px;
-  }
-  .location-plaque strong {
-    font-size: 20px;
   }
 }
