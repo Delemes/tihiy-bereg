@@ -277,7 +277,13 @@
 	grid-template-columns: auto 1fr;
 	gap: var(--ui-gap-3);
 	padding: var(--ui-gap-3);
+	z-index: 30;
 	animation: ui-rise 140ms ease-out;
+}
+
+/* Пока реплика печатается, по окну можно щёлкнуть и дочитать сразу. */
+.ui-dialogue--typing {
+	cursor: pointer;
 }
 
 .ui-dialogue__portrait {
@@ -287,6 +293,29 @@
 	background: var(--ui-panel-sunken);
 	image-rendering: pixelated;
 	object-fit: cover;
+	overflow: hidden;
+	display: grid;
+	place-items: center;
+}
+
+/* Портрет — вырезка из атласа: рамку и размер задаёт слот диалога. */
+.ui-dialogue__portrait .face-crop {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+}
+
+.ui-dialogue__letter {
+	font-size: 26px;
+	color: var(--ui-accent-dim);
+}
+
+.ui-dialogue__body {
+	position: relative;
+	min-width: 0;
 }
 
 .ui-dialogue__name {
@@ -297,9 +326,23 @@
 	margin-bottom: var(--ui-gap-1);
 }
 
+.ui-dialogue__role {
+	margin-left: var(--ui-gap-2);
+	font-size: var(--ui-size-micro);
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--ui-text-faint);
+}
+
 .ui-dialogue__text {
+	margin: 0;
 	font-size: var(--ui-size-body);
 	min-height: 3em;
+}
+
+.ui-dialogue__caret {
+	color: var(--ui-accent);
+	animation: ui-blink 700ms steps(2, end) infinite;
 }
 
 .ui-dialogue__more {
@@ -316,6 +359,23 @@
 	padding: 0;
 	display: grid;
 	gap: 2px;
+}
+
+.ui-choices .ui-btn {
+	width: 100%;
+	justify-content: flex-start;
+	text-align: left;
+	font-size: var(--ui-size-body);
+}
+
+.ui-choices .ui-btn > span {
+	flex: 1;
+	min-width: 0;
+}
+
+.ui-choices__hint {
+	color: var(--ui-text-faint);
+	font-size: var(--ui-size-micro);
 }
 
 /* Тултип предмета (§11) */
@@ -446,6 +506,7 @@
 		animation: none;
 	}
 
+	.ui-dialogue__caret,
 	.ui-dialogue__more {
 		animation: none;
 	}
