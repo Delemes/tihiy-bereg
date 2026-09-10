@@ -137,6 +137,10 @@ export default function Page() {
     setReply(null);
     open('talk');
   };
+  const closeTalk = () => {
+    setReply(null);
+    open('');
+  };
   const closeContext = () => {
     setContext(null);
     setContextNode('root');
@@ -324,6 +328,10 @@ export default function Page() {
           actions.current.cancel();
           return;
         }
+        if (panelRef.current === 'talk') {
+          closeTalk();
+          return;
+        }
         open(panelRef.current ? '' : 'menu');
         return;
       }
@@ -446,8 +454,7 @@ export default function Page() {
         return;
       }
       if (id === 'leave') {
-        setReply(null);
-        open('');
+        closeTalk();
         return;
       }
     }
@@ -455,8 +462,7 @@ export default function Page() {
     commit(result.state);
     setNode(result.node);
     if (result.close) {
-      open('');
-      setReply(null);
+      closeTalk();
     } else if (result.text) {
       const data = scene(result.state, speaker);
       setReply({
@@ -771,6 +777,14 @@ export default function Page() {
           </div>
         </>
       )}
+      {panel === 'talk' && !s.activity && (
+        <MessageWindow
+          key={speaker + node + talk.text}
+          data={talk}
+          choose={handleChoice}
+          handle={dialogue}
+        />
+      )}
       {panel === 'context' && context && contextScene && !s.activity && (
         <ContextMenu
           name={context.name}
@@ -789,7 +803,9 @@ export default function Page() {
         </output>
       )}
       <Dialog
-        open={(!!panel && panel !== 'context') || !!s.activity}
+        open={
+          (!!panel && panel !== 'context' && panel !== 'talk') || !!s.activity
+        }
         onOpenChange={(value) => {
           if (!value && !current.current.activity) {
             open('');
@@ -799,13 +815,7 @@ export default function Page() {
       >
         <DialogContent
           showCloseButton={false}
-          className={
-            s.activity
-              ? 'activity-window'
-              : panel === 'talk'
-                ? 'message-window'
-                : 'rpg-menu'
-          }
+          className={s.activity ? 'activity-window' : 'rpg-menu'}
         >
           {s.activity ? (
             <ActivityWindow
@@ -818,13 +828,6 @@ export default function Page() {
               pull={(v) => {
                 pulling.current = v;
               }}
-            />
-          ) : panel === 'talk' ? (
-            <MessageWindow
-              key={speaker + node + talk.text}
-              data={talk}
-              choose={handleChoice}
-              handle={dialogue}
             />
           ) : (
             <Panels
