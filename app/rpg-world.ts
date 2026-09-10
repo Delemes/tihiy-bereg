@@ -2,7 +2,7 @@ import { drawPassage, passageKind, preparePassageAtlas } from './rpg-passages';
 import { drawArmedHero, combatFeedback } from './rpg-combat-view';
 import { createInput, type InputRuntime } from './rpg-input-runtime';
 import { bodyBob, motionTuning, walkColumn } from './rpg-motion';
-import { promptFor, toInteractable } from './rpg-interactables';
+import { pickTarget, promptFor, toInteractable } from './rpg-interactables';
 import type { MotionState } from './rpg-combat';
 import { drawWings } from './rpg-wing-view';
 import { room, indoors, unitScale, finds } from './rpg-regions';
@@ -14,7 +14,6 @@ import {
 import {
   activePlaces,
   activeEnemies,
-  nearest,
   people,
   threatened,
   type State,
@@ -429,8 +428,10 @@ export function createWorld(
       );
     }
     drawWings(c, images['/rooms-v4.png'], s.region);
-    const near = nearest(s);
     const u = unitScale(s.region);
+    // Цель выбирается так же, как в интерфейсе: расстояние плюс мягкий
+    // штраф за отворот, поэтому подсказка и [E] всегда про один объект.
+    const near = pickTarget(activePlaces(s), s, u);
     for (const p of activePlaces(s)) {
       if (p.kind === 'npc') continue;
       if (finds[p.id] && !s.flags.includes('taken:' + p.id)) {
