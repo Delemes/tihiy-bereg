@@ -5,7 +5,7 @@
   --line: #6c715b;
   --ink: #303b34;
 }
-.rpg-menu[data-slot='dialog-content'] {
+.rpg-menu {
   width: min(1320px, calc(100vw - 48px));
   border: 1px solid #d2bf8f;
   border-radius: 0;
@@ -153,11 +153,11 @@
   padding-bottom: 16px;
   border-bottom: 3px double #7a805f;
 }
-.window-header [data-slot='dialog-title'] {
+.window-title {
   color: #f5e5ba;
   font: 30px/1.15 var(--serif);
 }
-.window-header [data-slot='dialog-description'] {
+.window-subtitle {
   color: #b6bba5;
   font-size: 12px;
   margin-top: 6px;
@@ -733,9 +733,7 @@
 }
 .hero-hud,
 .action-dock,
-.interact-prompt,
-.dialogue-paper,
-.answer-window {
+.interact-prompt {
   background: linear-gradient(110deg, #21352af5, #15271ef5);
   border-color: #b39e66;
   box-shadow:
@@ -749,14 +747,6 @@
 .action-dock button {
   background: #243b2b;
   border-color: #6d7c52;
-}
-.dialogue-paper {
-  border-width: 3px;
-  border-style: double;
-}
-.answer-window button:hover:not(:disabled),
-.answer-window button:focus-visible {
-  background: #51683c;
 }
 .combat-state-strip {
   background: #16271de8;
@@ -844,7 +834,7 @@
   }
 }
 @media (max-width: 850px) {
-  .rpg-menu[data-slot='dialog-content'] {
+  .rpg-menu {
     width: calc(100vw - 20px);
   }
   .menu-shell {
@@ -926,7 +916,7 @@
     margin-bottom: 13px;
     padding-bottom: 11px;
   }
-  .window-header [data-slot='dialog-title'] {
+  .window-title {
     font-size: 25px;
   }
   .journal-book {
